@@ -1,4 +1,4 @@
-from .import_datasets import import_process_compas, discretize
+from .import_datasets import discretize, import_process_compas
 
 dataset_name = "compas"
 dfI, class_map = import_process_compas(risk_class=True)

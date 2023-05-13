@@ -1,13 +1,12 @@
-import pandas as pd
 import numpy as np
-from mlxtend.frequent_patterns.apriori import (
-    generate_new_combinations_low_memory,
-    generate_new_combinations,
-)
+import pandas as pd
 from mlxtend.frequent_patterns import fpcommon as fpc
+from mlxtend.frequent_patterns.apriori import (
+    generate_new_combinations,
+    generate_new_combinations_low_memory,
+)
 
 from .utils_FPgrowth import fpgrowth_cm
-
 
 map_beta_distribution = {
     "d_fpr": {"T": ["fp"], "F": ["tn"]},
@@ -27,7 +26,7 @@ map_beta_distribution = {
     "d_for": {"T": ["fn"], "F": ["tn"]},
     "d_precision": {"T": ["tp"], "F": ["fp"]},
     "d_recall": {"T": ["tp"], "F": ["fn"]},
-    "d_f1": {"T": ["tp", "tp"], "F": ["fp", "fn"]}
+    "d_f1": {"T": ["tp", "tp"], "F": ["fp", "fn"]},
 }
 
 
@@ -81,9 +80,11 @@ def define_target(true_class_name, predicted_class_name, target_name):
         # Remove, never raised if we check before the input
         raise ValueError("None specified")
 
+
 def check_single_classification_target(true_class_name, predicted_class_name):
     if (true_class_name is None) or (predicted_class_name is None):
         return True
+
 
 class FP_DivergenceExplorer:
     def __init__(
@@ -105,21 +106,22 @@ class FP_DivergenceExplorer:
         )
 
         if self.target_type == CLASSIFICATION:
-
-            if check_single_classification_target(true_class_name, predicted_class_name):
+            if check_single_classification_target(
+                true_class_name, predicted_class_name
+            ):
                 if true_class_name is not None:
                     single_target_class = true_class_name
                 else:
                     single_target_class = predicted_class_name
-                cols = [single_target_class]  + ignore_cols
+                cols = [single_target_class] + ignore_cols
             else:
                 cols = [true_class_name, predicted_class_name] + ignore_cols
                 single_target_class = None
-                
+
             if single_target_class is None:
                 self.y = X_discrete[[true_class_name]].copy()
-                self.y_predicted =  X_discrete[predicted_class_name].copy().values
-                
+                self.y_predicted = X_discrete[predicted_class_name].copy().values
+
             else:
                 self.y = X_discrete[[single_target_class]].copy()
                 self.y_predicted = X_discrete[[single_target_class]].copy().values
@@ -378,7 +380,6 @@ class FP_DivergenceExplorer:
         cols_orderTP=["tn", "fp", "fn", "tp"],
         sortedV="support",
     ):
-
         fp = fpgrowth_cm(
             df,
             df_confusion_matrix,
@@ -389,7 +390,7 @@ class FP_DivergenceExplorer:
         row_root = dict(df_confusion_matrix.sum())
         row_root.update({"support": 1, "itemsets": frozenset()})
         fp.loc[len(fp), row_root.keys()] = row_root.values()
-        #fp = fp.append(row_root, ignore_index=True)
+        # fp = fp.append(row_root, ignore_index=True)
         fp["length"] = fp["itemsets"].str.len()
 
         fp["support_count"] = (fp["support"] * len(df)).round()
@@ -405,7 +406,6 @@ class FP_DivergenceExplorer:
         metrics=["d_fpr", "d_fnr", "d_accuracy"],
         FPM_type="fpgrowth",
     ):
-
         if FPM_type not in ["fpgrowth", "apriori"]:
             raise ValueError(
                 f'{FPM_type} algorithm is not handled. For now, we integrate the DivExplorer computation in "fpgrowth" and "apriori" algorithms.'
@@ -417,7 +417,6 @@ class FP_DivergenceExplorer:
             conf_matrix_cols = ["tn", "fp", "fn", "tp"]
 
         if FPM_type == "fpgrowth":
-
             if self.target_type == CLASSIFICATION:
                 input_data_targets = y_conf_matrix[conf_matrix_cols]
                 cols_orderTP = conf_matrix_cols
@@ -435,7 +434,6 @@ class FP_DivergenceExplorer:
             )
         else:
             if self.target_type == CLASSIFICATION:
-
                 attributes_one_hot = self.X.columns
                 df_with_conf_matrix = pd.concat(
                     [self.X, y_conf_matrix[conf_matrix_cols]], axis=1
@@ -482,15 +480,15 @@ class FP_DivergenceExplorer:
         cols_orderTP=["tn", "fp", "fn", "tp"],
     ):
         from .utils_metrics_FPx import (
-            fpr_df,
-            fnr_df,
             accuracy_df,
             classification_error_df,
-            true_positive_rate_df,
-            true_negative_rate_df,
+            f1_score_df,
+            fnr_df,
+            fpr_df,
             precision_df,
             recall_df,
-            f1_score_df
+            true_negative_rate_df,
+            true_positive_rate_df,
         )
 
         name_funct = {
@@ -527,7 +525,6 @@ class FP_DivergenceExplorer:
             fm_df[D_OUTCOME] = fm_df[AVG_OUTCOME] - infoRoot[AVG_OUTCOME].values[0]
 
         else:
-
             from .utils_metrics_FPx import getInfoRoot
 
             rootIndex = getInfoRoot(fm_df).index
@@ -556,7 +553,6 @@ class FP_DivergenceExplorer:
         return fm_df
 
     def mean_var_beta_distribution(self, FP_df, metric):
-
         cl_metric = map_beta_distribution[metric]
         FP_df["a"] = 1 + FP_df[cl_metric["T"]].sum(axis=1)
         FP_df["b"] = 1 + FP_df[cl_metric["F"]].sum(axis=1)
@@ -593,7 +589,6 @@ class FP_DivergenceExplorer:
     def statistical_significance_outcome(
         self, fm_df, mean_col, squared_col, type_test="welch"
     ):
-
         fm_df["var"] = (
             fm_df[squared_col] / fm_df[self.support_count_col] - fm_df[mean_col] ** 2
         )

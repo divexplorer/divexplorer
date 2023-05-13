@@ -82,20 +82,17 @@ def get_pos(df_cm):
 def get_neg(df_cm):
     return df_cm["tn"] + df_cm["fp"]
 
+
 def precision_df(df_cm):
-    return (df_cm["tp"]) / (
-        df_cm["tp"] + df_cm["fp"]
-    )
+    return (df_cm["tp"]) / (df_cm["tp"] + df_cm["fp"])
+
 
 def recall_df(df_cm):
-    return (df_cm["tp"]) / (
-        df_cm["tp"] + df_cm["fn"]
-    )
+    return (df_cm["tp"]) / (df_cm["tp"] + df_cm["fn"])
+
 
 def f1_score_df(df_cm):
-    return (2*df_cm["tp"]) / (
-        2*df_cm["tp"] + df_cm["fp"] + df_cm["fn"]
-    )
+    return (2 * df_cm["tp"]) / (2 * df_cm["tp"] + df_cm["fp"] + df_cm["fn"])
 
 
 def getInfoRoot(df):

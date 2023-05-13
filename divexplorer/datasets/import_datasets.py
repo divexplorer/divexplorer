@@ -1,11 +1,14 @@
-import pandas as pd
-import numpy as np
 import os
+
+import numpy as np
+import pandas as pd
 
 DATASET_DIR = os.path.join(".", "datasets")
 import warnings
 
 warnings.filterwarnings("ignore")
+
+
 # COMPAS
 # https://github.com/fair-preprocessing/nips2017/blob/master/compas/code/Generate_Compas_Data.ipynb
 # Quantize priors count between 0, 1-3, and >3
@@ -48,7 +51,6 @@ def get_decile_score_class2(x):
 
 # https://www.kaggle.com/tentotheminus9/what-causes-heart-disease-explaining-the-model
 def import_process_heart(discretize=False, bins=3, inputDir=DATASET_DIR):
-
     dt = pd.read_csv(os.path.join(inputDir, "heart.csv"))
     dt.columns = [
         "age",

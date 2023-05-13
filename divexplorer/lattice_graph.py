@@ -40,6 +40,7 @@ def getLatticeItemsetMetric(itemset, item_score, rounded=4, getLower=False):
 def orderedNameMapping(vertices, todo):
     return [", ".join(sorted(list(v))) for v in vertices]
 
+
 def plotLatticeGraph_colorGroups(
     inputTuples,
     name_mapping,
@@ -61,8 +62,7 @@ def plotLatticeGraph_colorGroups(
     displayItemsetLabels=False,
     font_size_ItemsetLabels=10,
 ):
-
-    from igraph import Graph, EdgeSeq
+    from igraph import EdgeSeq, Graph
 
     G = Graph.TupleList([(k, v) for k, vs in inputTuples.items() for v in vs])
 

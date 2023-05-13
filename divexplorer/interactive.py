@@ -19,7 +19,7 @@ def selectItemsInteractive(fpis):
     import ipywidgets as widgets
 
     items = [list(i)[0] for i in fpis.itemset_divergence[1].keys()]
-    attributes = list(set([k.split("=")[0] for k in items]))
+    attributes = list({k.split("=")[0] for k in items})
 
     map_a_i = {k: [] for k in attributes}
     for item in items:

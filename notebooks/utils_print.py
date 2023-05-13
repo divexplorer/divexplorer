@@ -7,7 +7,6 @@ div_name = "Δ"
 
 
 def printable(df_print, cols=["itemsets"], abbreviations={}, n_rows=3, decimals=(2, 3)):
-
     if type(decimals) is tuple:
         r1, r2 = decimals[0], decimals[1]
     else:

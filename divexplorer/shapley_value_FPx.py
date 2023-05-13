@@ -1,5 +1,6 @@
-import numpy as np
 import os
+
+import numpy as np
 
 
 def weight_delta_score(n, s):
@@ -64,8 +65,6 @@ def computeGlobalMeanShapleyValue_AllSubsets(item_score):
     return item_sh_sub
 
 
-
-
 def computeDeltaDiffShap(item_score, v_i=False):
     import pandas as pd
 
@@ -108,9 +107,6 @@ def computeDeltaDiffShap(item_score, v_i=False):
     return df_s
 
 
-
-
-
 def attr(item):
     return item.split("=")[0]
 
@@ -125,6 +121,7 @@ def plus(f1, f2):
 
 def weight_factor(lB, lA, lI, prod_mb):
     import math
+
     import numpy as np
 
     return (math.factorial(lB) * math.factorial(lA - lB - lI)) / (
@@ -135,7 +132,7 @@ def weight_factor(lB, lA, lI, prod_mb):
 def computeShapleyItemset(I, scores_l, attributes, card_map):
     import numpy as np
 
-    Bs = set(attributes) - set([attr(i) for i in I])
+    Bs = set(attributes) - {attr(i) for i in I}
     u_I = 0
     I_Bs = [
         k2
@@ -255,11 +252,10 @@ def compareShapleyValues(
             else f"{nameFig}.pdf"
         )
         plt.savefig(nameFig, format="pdf", bbox_inches="tight")
-    
+
     if show_figure:
         plt.show()
         plt.close()
-
 
 
 def plotComparisonShapleyValues(
@@ -365,7 +361,7 @@ def computeShapleyItemset_1(I, scores, attributes, card_map):
     u_I = 0
     # A\attr(I)
     Bs = set(attributes) - set([attr(i) for i in I])
-    # For B \subseteq A\attr(I)
+    # For B \\subseteq A\attr(I)
     for B in [list(i) for i in powerset(Bs)]:
         attrBI = B + [attr(i) for i in I]
         prod_mb = np.prod([card_map[i] for i in attrBI])

@@ -1,7 +1,8 @@
-import numpy as np
-import pandas as pd
 import collections
 from distutils.version import LooseVersion as Version
+
+import numpy as np
+import pandas as pd
 from pandas import __version__ as pandas_version
 
 
@@ -96,7 +97,6 @@ def generate_itemsets(
 
 
 def valid_input_check(df):
-
     if f"{type(df)}" == "<class 'pandas.core.frame.SparseDataFrame'>":
         msg = (
             "SparseDataFrame support has been deprecated in pandas 1.0,"
@@ -143,7 +143,7 @@ def valid_input_check(df):
             raise ValueError(s)
 
 
-class FPTree(object):
+class FPTree:
     def __init__(self, rank=None, trgs_root=None):
         self.root = FPNode_CM(None, target_matrix=trgs_root)
         self.nodes = collections.defaultdict(list)
@@ -250,7 +250,7 @@ class FPTree(object):
         )
 
 
-class FPNode_CM(object):
+class FPNode_CM:
     def __init__(self, item, count=0, parent=None, target_matrix=None):
         self.item = item
         self.count = count
@@ -282,8 +282,8 @@ class FPNode_CM(object):
 #
 # License: BSD 3 clause
 
-import math
 import itertools
+import math
 
 
 def fpgrowth_cm(

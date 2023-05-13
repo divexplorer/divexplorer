@@ -42,17 +42,13 @@ def abbreviateDict(d, abbreviations):
 
 
 from distutils.log import warn
+
+from .lattice_graph import getLatticeItemsetMetric, plotLatticeGraph_colorGroups
 from .shapley_value_FPx import (
-    shapley_subset,
-    computeShapleyItemset,
     computeDeltaDiffShap,
+    computeShapleyItemset,
+    shapley_subset,
 )
-
-from .lattice_graph import (
-    getLatticeItemsetMetric,
-    plotLatticeGraph_colorGroups,
-)
-
 
 i_col = "item i"
 delta_col = "delta_item"
@@ -85,11 +81,11 @@ map_beta_distribution = {
     "d_for": {"T": ["fn"], "F": ["tn"]},
     "d_precision": {"T": ["tp"], "F": ["fp"]},
     "d_recall": {"T": ["tp"], "F": ["fn"]},
-    "d_f1": {"T": ["tp", "tp"], "F": ["fp", "fn"]}
-
+    "d_f1": {"T": ["tp", "tp"], "F": ["fp", "fn"]},
 }
 
 VIZ_COL_NAME = "viz"
+
 
 # TODO --> move
 def _compute_t_test(df, col_mean, col_var, mean_d, var_d):
@@ -117,6 +113,7 @@ div_name = "Δ"
 
 D_OUTCOME = "d_outcome"
 AVG_OUTCOME = "outcome"
+
 
 class FP_Divergence:
     def __init__(self, freq_metrics, metric):
@@ -174,7 +171,6 @@ class FP_Divergence:
         getAllGreaterTh=False,
         **kwargs,
     ):
-
         nameTitle = f"Metric: {self.metric}"
         info_lattice = getLatticeItemsetMetric(
             itemset, self.itemset_divergence, getLower=getLower
@@ -207,7 +203,7 @@ class FP_Divergence:
                 # else:
                 # node_sources[node]=[p for p in color_groups["all_greater"] if p.issubset(node)]
         color_groups["normal"] = list(
-            set(nodes) - set([v for v1 in color_groups.values() for v in v1])
+            set(nodes) - {v for v1 in color_groups.values() for v in v1}
         )
         color_map = {
             "normal": "#6175c1",
@@ -463,7 +459,7 @@ class FP_Divergence:
         title=None,
         abbreviations={},
         xlabel=False,
-        show_figure=True
+        show_figure=True,
     ):
         import matplotlib.pyplot as plt
 
@@ -471,7 +467,9 @@ class FP_Divergence:
 
         if shapley_values is None and itemset is None:
             # todo
-            raise ValueError("Specify the itemset or the precomputed Shapley values (dict)")
+            raise ValueError(
+                "Specify the itemset or the precomputed Shapley values (dict)"
+            )
 
         if shapley_values is None and itemset:
             shapley_values = self.computeShapleyValue(itemset)
@@ -497,12 +495,10 @@ class FP_Divergence:
 
         if xlabel:
             ax.set_xlabel(f"${div_name}({i_name}|{p_name})$", size=labelsize)
-             # - Divergence contribution
-        
-        
+            # - Divergence contribution
+
         title = "" if title is None else title
         title = f"{title} ${metric}$" if metric != "" else title  # Divergence
-
 
         ax.set_title(title, fontsize=titlesize)
 
@@ -526,7 +522,7 @@ class FP_Divergence:
         # TODO square
         scores_l = self.getFItemsetsDivergence()
         items = [list(i)[0] for i in self.itemset_divergence[1].keys()]
-        attributes = list(set([k.split("=")[0] for k in items]))
+        attributes = list({k.split("=")[0] for k in items})
         from collections import Counter
 
         card_map = dict(Counter([i.split("=")[0] for i in items]))
@@ -773,17 +769,14 @@ class FP_Divergence:
             FPb.drop(columns=cols_beta, inplace=True)
             return FPb, self.t_value_col
 
-
-
-
     def correctiveTvalues(self):
         # Get-T-Values
-        
+
         corrOfI = self.getCorrectiveItemsDf().copy()
         corrOfI["corr_factor"] = abs(corrOfI["v_S"]) - abs(corrOfI["v_S+i"])
 
         if self.metric == D_OUTCOME:
-            return corrOfI       
+            return corrOfI
         itemsetsOfI = corrOfI[["S", "S+i"]]
         itemsetsOfI = list(set(itemsetsOfI["S"].values)) + list(set(itemsetsOfI["S+i"]))
         df = self.freq_metrics.loc[self.freq_metrics.itemsets.isin(itemsetsOfI)].copy()
@@ -796,28 +789,33 @@ class FP_Divergence:
         corrOfI[f"t_value_corr"] = (
             abs(corrOfI[f"mean_beta_{m}_S"] - corrOfI[f"mean_beta_{m}_S+i"])
         ) / ((corrOfI[f"var_beta_{m}_S"] + corrOfI[f"var_beta_{m}_S+i"]) ** 0.5)
-        #d_tt = self.getTvalues()
-        #corrOfI[f"t_value_S+i"] = corrOfI["S+i"].apply(lambda x: d_tt[x])
-        
+        # d_tt = self.getTvalues()
+        # corrOfI[f"t_value_S+i"] = corrOfI["S+i"].apply(lambda x: d_tt[x])
+
         return corrOfI
 
     # Old getSignificant
     def getCorrectiveItems(self):
-        #if self.corrSignif is not None:
+        # if self.corrSignif is not None:
         #    return self.corrSignif
         corrDf = self.correctiveTvalues()
         if self.metric == D_OUTCOME:
             import warnings
-            warnings.warn("All corrective items are returned. Statistical significance to be computed.")
-            return corrDf[[
-            "item i",
-            "S",
-            "S+i",
-            "v_i",
-            "v_S",
-            "v_S+i",
-            "corr_factor",
-            ]]
+
+            warnings.warn(
+                "All corrective items are returned. Statistical significance to be computed."
+            )
+            return corrDf[
+                [
+                    "item i",
+                    "S",
+                    "S+i",
+                    "v_i",
+                    "v_S",
+                    "v_S+i",
+                    "corr_factor",
+                ]
+            ]
         colsOfI = [
             "item i",
             "S",
