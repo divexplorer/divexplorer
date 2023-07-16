@@ -18,7 +18,7 @@ keywords = ["Pandas", "Fairness", "Subgroup Analysis", "Data Mining"]
 license = {file = "LICENSE"}
 name = "DivExplorer"
 readme = "README.md"
-version = "0.1.2a2"
+version = "0.1.2a3"
 
 [project.urls]
 Documentation = "https://divexplorer.readthedocs.io/en/latest/"

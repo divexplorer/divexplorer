@@ -1,13 +1,13 @@
-name: Publish to PyPI
+name: Publish to TestPyPI
 
 on:
   release:
-    types: [created]
+    types: published
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: PyPI
+    environment: TestPyPI
     permissions:
       id-token: write
     steps:
@@ -24,3 +24,5 @@ jobs:
         python -m build
     - name: Publish distribution
       uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
