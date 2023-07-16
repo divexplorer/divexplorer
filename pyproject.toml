@@ -12,23 +12,21 @@ classifiers = [
   "Programming Language :: Python :: 3.6",
   "Programming Language :: Python :: 3.7"
 ]
-dependencies = [
-  "matplotlib>=3.1.1",
-  "numpy>=1.16.4",
-  "mlxtend>=0.17.1",
-  "pandas>=0.24.2",
-  "plotly>=4.5.0",
-  "python_igraph>=0.8.3"
-]
-description = ""  # TODO
-keywords = [
-]
+dynamic = ["dependencies"]
+description = "Analyze Pandas dataframes, and other tabular data (csv), to find subgrops of data with properties that diverge from those of the overall dataset"
+keywords = ["Pandas", "Fairness", "Subgroup Analysis", "Data Mining"]
 license = {file = "LICENSE"}
 name = "DivExplorer"
 readme = "README.md"
-version = "0.1.1"
+version = "0.1.2a2"
 
 [project.urls]
 Documentation = "https://divexplorer.readthedocs.io/en/latest/"
 Homepage = "https://divexplorer.org"
 Source = "https://github.com/DivExplorer/divexplorer"
+
+[tool.setuptools]
+py-modules = ["divexplorer"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}

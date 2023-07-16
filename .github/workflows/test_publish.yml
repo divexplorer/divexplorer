@@ -3,11 +3,14 @@ name: Publish to TestPyPI
 on:
   push:
     branches:
-    - deploy-test
+    - test
 
 jobs:
-  upload:
+  deploy:
     runs-on: ubuntu-latest
+    environment: TestPyPI
+    permissions:
+      id-token: write
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
@@ -16,11 +19,11 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install build twine
-    - name: Build and publish
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.TESTPYPI_TOKEN }}
+        python -m pip install build
+    - name: Build distribution
       run: |
         python -m build
-        python -m twine upload dist/*
+    - name: Publish distribution
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
