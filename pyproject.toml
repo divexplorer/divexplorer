@@ -13,7 +13,7 @@ classifiers = [
   "Programming Language :: Python :: 3.7"
 ]
 dynamic = ["dependencies"]
-description = "Analyze Pandas dataframes, and other tabular data (csv), to find subgrops of data with properties that diverge from those of the overall dataset"
+description = "Analyze Pandas dataframes, and other tabular data (csv), to find subgroups of data with properties that diverge from those of the overall dataset"
 keywords = ["Pandas", "Fairness", "Subgroup Analysis", "Data Mining"]
 license = {file = "LICENSE"}
 name = "DivExplorer"

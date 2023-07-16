@@ -156,4 +156,4 @@ FP_fm_1class = fp_diver_1class.getFrequentPatternDivergence(
 
 ## Contributing
 
-Refer to [CONTRIBUTING.md](CONTRIBUTING.md) for  info on contributing and testing release/pre-releases.
+Refer to [CONTRIBUTING.md](CONTRIBUTING.md) for  info on contributing and releases/pre-releases.
