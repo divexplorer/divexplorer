@@ -10,6 +10,7 @@
     - [Notebooks](#notebooks)
     - [Package](#package)
   - [Paper](#paper)
+  - [Contributing](#contributing)
 
 Machine learning models may perform differently on different data subgroups. We propose the notion of divergence over itemsets (i.e., conjunctions of simple predicates) as a measure of different classification behavior on data subgroups, and the use of frequent pattern mining techniques for their identification. We quantify the contribution of different attribute values to divergence with the notion of Shapley values to identify both critical and peculiar behaviors of attributes.
 See our [paper](https://divexplorer.github.io/static/DivExplorer.pdf) and our [project page](https://divexplorer.github.io/) for all the details.
@@ -152,3 +153,7 @@ FP_fm_1class = fp_diver_1class.getFrequentPatternDivergence(
 ## Paper
 
 [Looking for Trouble: Analyzing Classifier Behavior via Pattern Divergence](https://divexplorer.github.io/static/DivExplorer.pdf). [Eliana Pastor](https://github.com/elianap), [Luca de Alfaro](https://luca.dealfaro.com/), [Elena Baralis](https://dbdmg.polito.it/wordpress/people/elena-baralis/). In Proceedings of the 2021 ACM SIGMOD Conference, 2021.
+
+## Contributing
+
+Refer to [CONTRIBUTING.md](CONTRIBUTING.md) for  info on contributing and testing release/pre-releases.
