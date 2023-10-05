@@ -70,22 +70,22 @@ def setup_fptree(df, min_support, df_targets):
 
 
 def generate_itemsets(
-    generator, num_itemsets, colname_map, cols_orderTP=["tn", "fp", "fn", "tp"]
+    generator, num_itemsets, colname_map, columns_accumulate=["tn", "fp", "fn", "tp"]
 ):
     itemsets = []
     supports = []
     c_dict = {}
-    for i_c_dict in range(0, len(cols_orderTP)):
+    for i_c_dict in range(0, len(columns_accumulate)):
         c_dict[i_c_dict] = []
     for sup, iset, cf_final in generator:
         itemsets.append(frozenset(iset))
         supports.append(sup / num_itemsets)
-        for i_c_dict in range(0, len(cols_orderTP)):
+        for i_c_dict in range(0, len(columns_accumulate)):
             c_dict[i_c_dict].append(cf_final[i_c_dict])
 
     res_dic = {"support": supports, "itemsets": itemsets}
 
-    res_dic.update({cols_orderTP[i]: c_dict[i] for i in c_dict})
+    res_dic.update({columns_accumulate[i]: c_dict[i] for i in c_dict})
     res_df = pd.DataFrame(res_dic)
 
     if colname_map is not None:
@@ -290,10 +290,10 @@ def fpgrowth_cm(
     df,
     df_targets,
     min_support=0.5,
-    use_colnames=False,
+    use_colnames=True,
     max_len=None,
     verbose=0,
-    cols_orderTP=["tn", "fp", "fn", "tp"],
+    columns_accumulate=["tn", "fp", "fn", "tp"],
 ):
     """Get frequent itemsets from a one-hot DataFrame
     Parameters
@@ -363,7 +363,7 @@ def fpgrowth_cm(
     generator = fpg_step(tree, minsup, colname_map, max_len, verbose)
 
     return generate_itemsets(
-        generator, len(df.index), colname_map, cols_orderTP=cols_orderTP
+        generator, len(df.index), colname_map, columns_accumulate=columns_accumulate
     )
 
 
