@@ -83,13 +83,13 @@ def generate_itemsets(
         for i_c_dict in range(0, len(columns_accumulate)):
             c_dict[i_c_dict].append(cf_final[i_c_dict])
 
-    res_dic = {"support": supports, "itemsets": itemsets}
+    res_dic = {"support": supports, "itemset": itemsets}
 
     res_dic.update({columns_accumulate[i]: c_dict[i] for i in c_dict})
     res_df = pd.DataFrame(res_dic)
 
     if colname_map is not None:
-        res_df["itemsets"] = res_df["itemsets"].apply(
+        res_df["itemset"] = res_df["itemset"].apply(
             lambda x: frozenset([colname_map[i] for i in x])
         )
 
@@ -332,10 +332,10 @@ def fpgrowth_cm(
       Shows the stages of conditional tree generation.
     Returns
     -----------
-    pandas DataFrame with columns ['support', 'itemsets'] of all itemsets
+    pandas DataFrame with columns ['support', 'itemset'] of all itemsets
       that are >= `min_support` and < than `max_len`
       (if `max_len` is not None).
-      Each itemset in the 'itemsets' column is of type `frozenset`,
+      Each itemset in the 'itemset' column is of type `frozenset`,
       which is a Python built-in type that behaves similarly to
       sets except that it is immutable
       (For more info, see

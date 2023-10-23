@@ -22,10 +22,10 @@ def apriori_divergence(
 
     Returns
     -----------
-    pandas DataFrame with columns ['support', 'itemsets'] of all itemsets
+    pandas DataFrame with columns ['support', 'itemset'] of all itemsets
       that are >= `min_support` and < than `max_len`
       (if `max_len` is not None).
-      Each itemset in the 'itemsets' column is of type `frozenset`,
+      Each itemset in the 'itemset' column is of type `frozenset`,
       which is a Python built-in type that behaves similarly to
       sets except that it is immutable
       (For more info, see
@@ -175,15 +175,15 @@ def apriori_divergence(
         all_res.append(res)
 
     res_df = pd.concat(all_res)
-    res_df.columns = ["support", "itemsets"] + cols_orderTP
+    res_df.columns = ["support", "itemset"] + cols_orderTP
 
     if use_colnames:
         mapping = {idx: item for idx, item in enumerate(df.columns)}
-        res_df["itemsets"] = res_df["itemsets"].apply(
+        res_df["itemset"] = res_df["itemset"].apply(
             lambda x: frozenset([mapping[i] for i in x])
         )
 
-    res_df["length"] = res_df["itemsets"].str.len()
+    res_df["length"] = res_df["itemset"].str.len()
     res_df["support_count"] = np.sum(res_df[cols_orderTP], axis=1)
 
     res_df.sort_values(sortedV, ascending=False, inplace=True)

@@ -156,7 +156,7 @@ class DivergenceExplorer:
                 min_support=min_support,
             )
 
-        all_dataset_row = {"support": 1, "itemsets": frozenset()}
+        all_dataset_row = {"support": 1, "itemset": frozenset()}
 
         cols_to_drop = []
         if boolean_outcomes:
@@ -289,7 +289,7 @@ class DivergenceExplorer:
             len(df_divergence), all_dataset_row.keys()
         ] = all_dataset_row.values()
 
-        df_divergence["length"] = df_divergence["itemsets"].str.len()
+        df_divergence["length"] = df_divergence["itemset"].str.len()
         df_divergence["support_count"] = (
             df_divergence["support"] * len_dataset
         ).round()
