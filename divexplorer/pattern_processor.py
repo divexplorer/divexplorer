@@ -50,6 +50,15 @@ class DivergencePatternProcessor:
         }
 
     def shapley_value(self, pattern=None, row_idx=None):
+        """
+        Compute the Shapley value of a pattern
+        We can specify the pattern either directly by specifying the pattern (frozen set) or row_idx of the pattern in the patterns dataframe
+        Args:
+            pattern (frozen set): list of items - if None, row_idx must be provided
+            row_idx (int): row index of the pattern in the patterns dataframe - if None, pattern must be provided
+        Returns:
+            (dict) Shapley value of the pattern - {item: shapley value} for each item in the pattern
+        """
         assert (
             pattern is None or row_idx is None
         ), "Either pattern or row_idx must be provided"
@@ -162,6 +171,14 @@ class DivergencePatternProcessor:
             th_redundancy (float): threshold for redundancy
         Returns:
             (pd.DataFrame) patterns without redundancy
+
+        Let I and  I \ {item i} be two patterns   (for example,  {sex=Male, age=<25} and {sex=Male})
+        If exist an item i such that it absolute marginal contribution is lower than a threshold epsilon,
+        i.e. abs( divergence(I) - divergence(I\{item i}) <= epsilon
+        We can prune I. The pattern 𝐼 \ {item i} captures the divergence of pattern 𝐼, since the inclusion of the item i only slightly alters the divergence
+        In the example, we would keep just sex=Male
+        We proceed in this way for all the patterns.
+
         """
         patterns_divergence = self.dict_len_pattern_divergence
         redundants = []
@@ -201,6 +218,13 @@ class DivergencePatternProcessor:
             return patterns
 
     def global_shapley_value(self):
+        """Compute the Global Shapley value of the patterns
+        The Global Shapley value is a generalization of the Shapley value to the entire set of all items.
+        It captures the role of an item in giving rise to divergence jointly with other attributes.
+
+        Returns:
+            (dict) Global Shapley value of the items across all frequent patterns - {item: global shapley value}
+        """
         # Get 1-itemsets
         items = [item for item in self.dict_len_pattern_divergence[1].keys()]
 
