@@ -1,5 +1,5 @@
 # These fields are available in the patterns dataframe and we always want to keep them
-BASE_COLUMNS = ["support", "itemsets", "length", "support_count"]
+BASE_COLUMNS = ["support", "itemset", "length", "support_count"]
 
 
 def sort_pattern(x, abbreviations={}):
@@ -43,7 +43,7 @@ class DivergencePatternProcessor:
         """
         patterns = self.patterns
         metric = self.metric + "_div"
-        d = patterns[["itemsets", metric]].set_index("itemsets").to_dict("index")
+        d = patterns[["itemset", metric]].set_index("itemset").to_dict("index")
         return {
             k: {k1: v[metric] for k1, v in d.items() if k == len(k1)}
             for k in range(0, max(patterns["length"] + 1))
@@ -58,7 +58,7 @@ class DivergencePatternProcessor:
         ), "Either pattern or row_idx must be provided"
 
         if row_idx is not None:
-            pattern = self.patterns.iloc[row_idx]["itemsets"]
+            pattern = self.patterns.iloc[row_idx]["itemset"]
         from divexplorer.shapley_value import compute_shapley_value
 
         return compute_shapley_value(pattern, self.dict_len_pattern_divergence)
@@ -177,7 +177,7 @@ class DivergencePatternProcessor:
                     if abs(v_pattern - v_itemset_minus_item) <= th_redundancy:
                         redundants.append(pattern)
         patterns_not_red = self.patterns.loc[
-            self.patterns.itemsets.isin(redundants) == False
+            self.patterns.itemset.isin(redundants) == False
         ]
         return patterns_not_red
 
