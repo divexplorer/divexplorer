@@ -1,7 +1,3 @@
-"""divexplorer - DivExplorer"""
-
-__version__ = "0.1.0"
-__author__ = "Eliana Pastor <eliana.pastor@polito.it>"
-__all__ = [
-    "divexplorer",
-]
+from .divexplorer import DivergenceExplorer
+from .pattern_processor import DivergencePatternProcessor
+from .shapley_value import compute_shapley_value
