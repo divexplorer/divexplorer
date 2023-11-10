@@ -66,9 +66,9 @@ class DivergenceExplorer:
     def get_pattern_divergence(
         self,
         min_support: float,
-        boolean_outcomes: list = [],
-        quantitative_outcomes: list = [],
-        attributes: list = [],
+        boolean_outcomes: list = None,
+        quantitative_outcomes: list = None,
+        attributes: list = None,
         FPM_algorithm="fpgrowth",
         show_coincise=True,
     ):
@@ -86,6 +86,11 @@ class DivergenceExplorer:
             "fpgrowth",
             "apriori",
         ], f"{FPM_algorithm} algorithm is not handled. Qe integrate the DivExplorer computation in 'fpgrowth' and 'apriori' algorithms."
+
+        # Sets the default values for lists. 
+        quantitative_outcomes = quantitative_outcomes or []
+        boolean_outcomes = boolean_outcomes or []
+        attributes = attributes or []
 
         assert (
             len(boolean_outcomes) > 0 or len(quantitative_outcomes) > 0
@@ -225,7 +230,6 @@ class DivergenceExplorer:
                 ]  # We omit the all dataset row
 
         else:
-            # raise ValueError("Not implemented yet.")
             for quantitative_outcome in quantitative_outcomes:
                 df_divergence[quantitative_outcome] = (
                     df_divergence[quantitative_outcome]
@@ -301,4 +305,6 @@ class DivergenceExplorer:
         if show_coincise:
             df_divergence = df_divergence.drop(columns=cols_to_drop)
 
+        # Drops the square column. 
+        df_divergence = df_divergence.drop(f"{quantitative_outcome}_SQUARED", axis=1)
         return df_divergence
