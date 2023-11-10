@@ -164,6 +164,8 @@ class DivergenceExplorer:
         all_dataset_row = {"support": 1, "itemset": frozenset()}
 
         cols_to_drop = []
+        squared_cols_to_drop = []
+        
         if boolean_outcomes:
             for boolean_outcome in boolean_outcomes:
                 # The result is average when non considering the bottom values
@@ -237,6 +239,7 @@ class DivergenceExplorer:
                 )
 
                 quantitative_outcome_squared = f"{quantitative_outcome}_SQUARED"
+                squared_cols_to_drop.append(quantitative_outcome_squared)
 
                 # Add the info of the all dataset row
                 for column_name in [
@@ -304,7 +307,6 @@ class DivergenceExplorer:
 
         if show_coincise:
             df_divergence = df_divergence.drop(columns=cols_to_drop)
-
-        # Drops the square column. 
-        df_divergence = df_divergence.drop(f"{quantitative_outcome}_SQUARED", axis=1)
+        df_divergence = df_divergence.drop(columns=squared_cols_to_drop)
+        
         return df_divergence

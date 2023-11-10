@@ -25,135 +25,108 @@ pip install divexplorer
 
 or, download a wheel or source archive from [PyPI](https://pypi.org/project/divexplorer/).
 
-## Usage
+## Example Notebooks
 
-### Notebooks
+This [notebook](https://github.com/divexplorer/divexplorer/blob/main/notebooks/DivExplorerExample.ipynb) gives an example of how to use DivExplorer to find divergent subgroups in datasets and in the predictions of a classifier.
+You can also [run the notebook directly on Colab](https://colab.research.google.com/drive/1lDqqssBusiFHjgR6EciuWNT55hO4_X0o?usp=sharing). 
 
-At the notebook [**running example - COMPAS dataset**](https://github.com/elianap/divexplorer/blob/main/notebooks/Example_Divergence_analysis_COMPAS.ipynb) you can find a running example of the usage of DivExplorer
+## Quick Start
 
-### Package
-
-For the analysis of the divergent classification behavior in subgroups:
-
-```python
-from divexplorer.FP_DivergenceExplorer import FP_DivergenceExplorer
-from divexplorer.FP_Divergence import FP_Divergence
-
-# Input: a discretized dataframe with the true class and the predicted class.
-# class_map specifies the values that are used for positive and negative cases.
-fp_diver = FP_DivergenceExplorer(
-    df_discretized,
-    true_class_name="class",
-    predicted_class_name="predicted",
-    class_map={"P": 1, "N": 0},
-)
-
-# Extract frequent patterns (FP) and compute divergence
-# This needs two parameters:
-# - the minimum support threshold,
-# - the divergence to be analyzed:
-#   d_fpr : divergence of false positive rate
-#   d_fnr : divergence of false negative rate
-FP_fm = fp_diver.getFrequentPatternDivergence(
-    min_support=0.1, metrics=["d_fpr", "d_fnr"]
-)
-```
-
-The output is a pandas dataframe. Each row indicate a FP with its classification performance and its divergence.
-We can then analyze the divergence of FP with respect a metric of interest (e.g. FPR).
+DivExplorer works on Pandas datasets.  Here we load an example one, and discretize in coarser ranges one of its attributes. 
 
 ```python
-fp_divergence_fpr = FP_Divergence(FP_fm, "d_fpr")
+import pandas as pd
+
+df_census = pd.read_csv('https://raw.githubusercontent.com/divexplorer/divexplorer/main/datasets/census_income.csv')
+df_census["AGE_RANGE"] = df_census.apply(lambda row : 10 * (row["A_AGE"] // 10), axis=1)
 ```
 
-We can sort the itemset for FPR divergence (and visualize the K=10 most divergent ones)
+We can then find the data subgroups that have highest income divergence, using the `DivergenceExplorer` class as follows: 
 
 ```python
-K = 10
-FP_fpr_sorted = fp_divergence_fpr.getDivergence(th_redundancy=0).head(K)
+from divexplorer import DivergenceExplorer
+
+fp_diver = DivergenceExplorer(df_census)
+subgroups = fp_diver.get_pattern_divergence(min_support=0.001, quantitative_outcomes=["PTOTVAL"])
+subgroups.sort_values(by="PTOTVAL_div", ascending=False).head(10)
 ```
 
-or directly get the top K divergent patterns
+### Finding subgroups with divergent performance in classifiers
+
+For classifiers, it may be of interest to find the subgroups with the highest (or lowest) divergence in characteristics such as false positive rates, etc.  Here is how to do it for the false-positive rate in a COMPAS-derived classifier. 
 
 ```python
-# As a dictionary, where the key are FP and values are their divergence values
-topK_dict_fpr = fp_divergence_fpr.getDivergenceTopK(K=10, th_redundancy=0)
-
-# Or as a DataFrame
-topK_df_fpr = fp_divergence_fpr.getDivergenceTopKDf(K=10, th_redundancy=0)
+compas_df = pd.read_csv('https://raw.githubusercontent.com/divexplorer/divexplorer/main/datasets/compas_discretized.csv')
 ```
 
-We can estimate the contribution of each item to the divergence using the notion of Shapley value
+We generate an `fp` column whose average will give the false-positive rate, like so: 
 
 ```python
-# Let be itemset_i a FP of interest, for example the one with highest FP_Divergence
-itemset_i = list(topK_dict_fpr.keys())[0]
-itemset_shap = fp_divergence_fpr.computeShapleyValue(itemset_i)
+from divexplorer.outcomes import get_false_positive_rate_outcome
 
-# Plot shapley values
-fp_divergence_fpr.plotShapleyValue(shapley_values=itemset_shap)
+y_trues = compas_df["class"]
+y_preds = compas_df["predicted"]
 
-# Alternatively, we can just use as input the itemset itself
-fp_divergence_fpr.plotShapleyValue(itemset=itemset_i)
+compas_df['fp'] =  get_false_positive_rate_outcome(y_trues, y_preds)
 ```
 
-The itemset can also be inspected using the lattice graph
+The `fp` column has values: 
+
+* 1, if the data is a false positive (`class` is 0 and `predicted` is 1)
+* 0, if the data is a true negative (`class` is 0 and `predicted` is 0). 
+* NaN, if the class is positive (`class` is 1).
+
+We use Nan for `class` 1 data, to exclude those data from the average, so that the column average is the false-positive rate.
+We can then find the most divergent groups as in the previous example, noting that here we use `boolean_outcomes` rather than `quantitative_outcomes` because `fp` is boolean: 
 
 ```python
-# Plot the lattice graph
-# Th_divergence: if specified, itemsets of the lattice with divergence greater than specified value are highlighted in magenta/squares
-##getLower: if True, corrective patterns are highlighted in light blue/diamonds
-fig = fp_divergence_fpr.plotLatticeItemset(
-    itemset_i, Th_divergence=0.15, sizeDot="small", getLower=True
-)
-fig.show()
+fp_diver = DivergenceExplorer(compas_df)
+
+attributes = ['race', '#prior', 'sex', 'age']
+FP_fm = fp_diver.get_pattern_divergence(min_support=0.1, attributes=attributes, 
+                                        boolean_outcomes=['fp'])
+FP_fm.sort_values(by="fp_div", ascending=False).head(10)
 ```
 
-DivExplorer allows to identify peculiar behaviors as corrective phenomena.
-Corrective items are items that, when added to an itemset, *reduce* the divergence.
+Note how we specify the attributes that can be used to define subgroups. 
+
+### Analyzing subgroups via Shapley values
+
+If we want to analyze what factors contribute to the divergence of a particular subgroup, we can do so via Shapley values: 
 
 ```python
-fp_divergence_fpr.getCorrectiveItems()
+fp_details = DivergencePatternProcessor(FP_fm, 'fp')
+
+pattern = fp_details.patterns['itemset'].iloc[37]
+fp_details.shapley_value(pattern)
 ```
 
-We can then analyze the influence of each item on the divergence of the entire dataset.
+### Pruning redundant subgroups
 
-We can do with:
-
-- the *individual divergence* of an item. It is simply the divergence of an item in isolation.
-- the *global divergence* of an item. It a generalization of the Shapley value to the entire set of all items. It captures the role of an item in giving rise to divergence jointly with other attributes. >>> #Compute global shapley value
+If you get too many subgroups, you can prune redundant ones via _redundancy pruning_. 
+This prunes a pattern $\beta$ if there is a pattern $\alpha$, subset of $\beta$, with a divergence difference below a threshold. 
 
 ```python
-# Individual divergence
-individual_divergence_fpr = fp_divergence_fpr.getFItemsetsDivergence()[1]
-fp_divergence_fpr.plotShapleyValue(
-    shapley_values=individual_divergence_fpr, sizeFig=(4, 5)
-)
-
-# Global divergence
-global_item_divergence_fpr = fp_divergence_fpr.computeGlobalShapleyValue()
-fp_divergence_fpr.plotShapleyValue(shapley_values=global_item_divergence_fpr)
+df_pruned = fp_details.redundancy_pruning(th_redundancy=0.01)
+df_pruned.sort_values("fp_div", ascending=False).head(5)
 ```
 
-Note that the evaluation can be perform the analysis of the divergence of a single class of interest:
+## Papers
 
-```python
-min_sup = 0.1
-fp_diver_1class = FP_DivergenceExplorer(
-    X_discretized.drop(columns="predicted"),
-    true_class_name="class",
-    class_map=class_map,
-)
-# For example, we analyze the positive rate divergenxe
-FP_fm_1class = fp_diver_1class.getFrequentPatternDivergence(
-    min_support=min_sup, metrics=["d_posr", "d_negr"]
-)
-```
+The original paper is:
 
-## Paper
+> [Looking for Trouble: Analyzing Classifier Behavior via Pattern Divergence](https://divexplorer.github.io/static/DivExplorer.pdf). [Eliana Pastor](https://github.com/elianap), [Luca de Alfaro](https://luca.dealfaro.com/), [Elena Baralis](https://dbdmg.polito.it/wordpress/people/elena-baralis/). In Proceedings of the 2021 ACM SIGMOD Conference, 2021.
 
-[Looking for Trouble: Analyzing Classifier Behavior via Pattern Divergence](https://divexplorer.github.io/static/DivExplorer.pdf). [Eliana Pastor](https://github.com/elianap), [Luca de Alfaro](https://luca.dealfaro.com/), [Elena Baralis](https://dbdmg.polito.it/wordpress/people/elena-baralis/). In Proceedings of the 2021 ACM SIGMOD Conference, 2021.
+You can find more papers in the [project page](https://divexplorer.github.io/).
 
-## Contributing
+## Code Contributors
+
+Project lead:
+
+- [Eliana Pastor](https://github.com/elianap)
+
+Other contributors: 
+
+- [Luca de Alfaro](https://luca.dealfaro.com/)
 
 Refer to [CONTRIBUTING.md](CONTRIBUTING.md) for  info on contributing and releases/pre-releases.
