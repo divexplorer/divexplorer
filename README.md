@@ -1,4 +1,3 @@
-[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/divexplorer/divexplorer/main.svg)](https://results.pre-commit.ci/latest/github/divexplorer/divexplorer/main)
 [![PyPI](https://img.shields.io/pypi/v/divexplorer)](https://pypi.org/project/divexplorer/)
 [![Downloads](https://pepy.tech/badge/divexplorer)](https://pepy.tech/project/divexplorer)
 
