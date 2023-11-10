@@ -127,5 +127,3 @@ Project lead:
 Other contributors: 
 
 - [Luca de Alfaro](https://luca.dealfaro.com/)
-
-Refer to [CONTRIBUTING.md](CONTRIBUTING.md) for  info on contributing and releases/pre-releases.
