@@ -8,7 +8,7 @@ authors = [
   {name = "Luca de Alfaro", email = "luca@ucsc.edu"}
   ]
 classifiers = [
-  "Development Status :: 2 - Pre-Alpha",
+  "Development Status :: 3 - Alpha",
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
@@ -24,7 +24,7 @@ license = {file = "LICENSE"}
 
 name = "DivExplorer"
 readme = "README.md"
-version = "0.2.1"
+version = "0.2.2"
 
 [project.urls]
 Documentation = "https://divexplorer.readthedocs.io/en/latest/"
