@@ -1,4 +1,5 @@
 from itertools import chain, combinations
+import math
 
 
 def powerset(iterable):
@@ -32,7 +33,6 @@ def compute_shapley_value_item(item, pattern, powerset_pattern, item_score):
         n = |N| = len(pattern)
         """
         #  |S!|(|N| - |S| - 1)! / |N|!
-        import math
 
         return (math.factorial(s) * math.factorial(n - s - 1)) / math.factorial(n)
 
@@ -44,11 +44,10 @@ def compute_shapley_value_item(item, pattern, powerset_pattern, item_score):
     )
 
 
-def compute_shapley_value(pattern, item_score):
+def compute_shapley_value(pattern: frozenset, item_score: dict):
     """Compute the Shapley value of a subset of items
-    Args:
-        pattern (frozen set): list of items
-        item_score (dict): dictionary of pattern scores: len(pattern) -> {pattern: score}
+    :param pattern: list of items
+    :param item_score: dictionary of pattern scores: len(pattern) -> {pattern: score}
     """
 
     # Get all subsets of the pattern (powerset) - 2^N with N = len(pattern)

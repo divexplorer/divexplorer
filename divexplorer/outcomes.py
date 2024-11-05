@@ -8,6 +8,7 @@ def get_false_positive_rate_outcome(
     :param y_trues: true values (e.g., df['y_true'])
     :param y_preds: predicated values.
     :param negative_value: value of the negative class.
+    :returns: boolean outcome column values for the false positive rate.
     """
     fp = np.array(
         get_false_positives(y_trues, y_preds, negative_value=negative_value)
@@ -29,6 +30,7 @@ def get_false_negative_rate_outcome(
     :param y_trues: true values (e.g., df['y_true'])
     :param y_preds: predicated values.
     :param positive_value: value of the positive class.
+    :returns: boolean outcome column values for the false negative rate.
     """
     fn = np.array(
         get_false_negatives(y_trues, y_preds, positive_value=positive_value)
@@ -48,6 +50,7 @@ def get_accuracy_outcome(y_trues, y_preds, negative_value=0, positive_value=1):
     :param y_preds: predicated values.
     :param negative_value: value of the negative class.
     :param positive_value: value of the positive class.
+    :returns: boolean outcome column values for the accuracy rate.
     """
     fn = np.array(
         get_false_negatives(y_trues, y_preds, positive_value=positive_value)
@@ -72,6 +75,7 @@ def get_true_positives(y_trues, y_preds, positive_value=1):
     :param y_trues: true values (e.g., df['y_true'])
     :param y_preds: predicated values
     :param positive_value: value of the positive class. 
+    :returns: boolean outcome column values for the true positive rate.
     """
     return (y_trues == y_preds) & (y_trues == positive_value)
 
@@ -81,6 +85,7 @@ def get_true_negatives(y_trues, y_preds, negative_value=1):
     :param y_trues: true values (e.g., df['y_true'])
     :param y_preds: predicated values.
     :param negative_value: value of the negative class.
+    :returns: boolean outcome column values for the true negative rate.
     """
     return (y_trues == y_preds) & (y_trues == negative_value)
 
@@ -90,6 +95,7 @@ def get_false_positives(y_trues, y_preds, negative_value=1):
     :param y_trues: true values (e.g., df['y_true'])
     :param y_preds: predicated values.
     :param negative_value: value of the negative class.
+    :returns: boolean outcome column values for the false positive rate.
     """
     return (y_trues != y_preds) & (y_trues == negative_value)
 
@@ -99,7 +105,6 @@ def get_false_negatives(y_trues, y_preds, positive_value=1):
     :param y_trues: true values (e.g., df['y_true'])
     :param y_preds: predicated values.
     :param positive_value: value of the positive class.
+    :returns: boolean outcome column values for the false negative rate.
     """
     return (y_trues != y_preds) & (y_trues == positive_value)
-
-

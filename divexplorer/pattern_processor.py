@@ -3,7 +3,7 @@ BASE_COLUMNS = ["support", "itemset", "length", "support_count"]
 
 
 def sort_pattern(x, abbreviations={}):
-    """Sort a pattern and abbreviate by replacing the abbreviations"""
+    # Sort a pattern and abbreviate by replacing the abbreviations. 
     x = list(x)
     x.sort()
     x = ", ".join(x)
@@ -21,10 +21,12 @@ def abbreviate_dictionary(pattern_value, abbreviations):
 
 
 class DivergencePatternProcessor:
+    """Class to process patterns and compute Shapley values."""
+    
     def __init__(self, patterns, metric):
         """
         :param patterns: dataframe patterns
-        :param metric: metric used for divergence
+        :param metric: name of the field (without final `_div`) used for divergence
         """
         # We only want to keep the columns that are relevant to the metric + the base columns
         self.patterns = patterns[
@@ -39,7 +41,7 @@ class DivergencePatternProcessor:
         """
         Define an intermediate representation of the patterns dataframe in the form
         Len itemset -> {pattern: divergence}
-        :param metric: metric used for divergence
+        :return: Mapping from item length to item divergence.
         """
         patterns = self.patterns
         metric = self.metric + "_div"
