@@ -88,10 +88,22 @@ FP_fm.sort_values(by="fp_div", ascending=False).head(10)
 ```
 
 Note how we specify the attributes that can be used to define subgroups. 
+In the above code, we use `boolean_outcomes` because `fp` is boolean. 
+The following example, from the example notebook, shows how to use 
+`quantitative_outcomes` for a quantitative outcome.
+
+```python
+df_census = pd.read_csv('https://raw.githubusercontent.com/divexplorer/divexplorer/main/datasets/census_income.csv')
+explorer = DivergenceExplorer(df_census)
+value_subgroups = explorer.get_pattern_divergence(
+    min_support=0.001, quantitative_outcomes=["PTOTVAL"])
+```
 
 ### Analyzing subgroups via Shapley values
 
-If we want to analyze what factors contribute to the divergence of a particular subgroup, we can do so via Shapley values: 
+Returning to our COMPAS example, if we want to analyze what factors 
+contribute to the divergence of a particular subgroup, 
+we can do so via Shapley values: 
 
 ```python
 fp_details = DivergencePatternProcessor(FP_fm, 'fp')
@@ -128,3 +140,6 @@ Other contributors:
 
 - [Luca de Alfaro](https://luca.dealfaro.com/)
 - [Harsh Dadhich]()
+
+# Documentation
+
