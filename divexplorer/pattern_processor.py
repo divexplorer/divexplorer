@@ -3,7 +3,7 @@ BASE_COLUMNS = ["support", "itemset", "length", "support_count"]
 
 
 def sort_pattern(x, abbreviations={}):
-    """Sort a pattern and abbreviate by replacing the abbreviations"""
+    # Sort a pattern and abbreviate by replacing the abbreviations. 
     x = list(x)
     x.sort()
     x = ", ".join(x)
@@ -21,10 +21,12 @@ def abbreviate_dictionary(pattern_value, abbreviations):
 
 
 class DivergencePatternProcessor:
+    """Class to process patterns and compute Shapley values."""
+    
     def __init__(self, patterns, metric):
         """
         :param patterns: dataframe patterns
-        :param metric: metric used for divergence
+        :param metric: name of the field (without final `_div`) used for divergence
         """
         # We only want to keep the columns that are relevant to the metric + the base columns
         self.patterns = patterns[
@@ -39,7 +41,7 @@ class DivergencePatternProcessor:
         """
         Define an intermediate representation of the patterns dataframe in the form
         Len itemset -> {pattern: divergence}
-        :param metric: metric used for divergence
+        :return: Mapping from item length to item divergence.
         """
         patterns = self.patterns
         metric = self.metric + "_div"
@@ -74,36 +76,38 @@ class DivergencePatternProcessor:
 
     def plot_shapley_value(
         self,
-        pattern=None,
-        row_idx=None,
-        shapley_values=None,
-        figsize=(4, 3),
-        abbreviations={},
-        sort_by_value=True,
-        height=0.5,
-        linewidth=0.8,
-        labelsize=10,
-        title="",
+        pattern : frozenset =None,
+        row_idx : int =None,
+        shapley_values : dict =None,
+        figsize : tuple=(4, 3),
+        abbreviations : dict ={},
+        sort_by_value: bool =True,
+        height : float =0.5,
+        linewidth : float=0.8,
+        labelsize: int =10,
+        title : str="",
         x_label="",
-        name_fig=None,
-        save_fig=False,
-        show_figure=True,
+        name_fig : str=None,
+        save_fig : bool=False,
+        show_figure : bool=True,
     ):
         """
-        Plot the Shapley value of a pattern
-        Args:
-        Specify either pattern or row_idx or shapley_value
-        pattern (frozen set): list of items
-        row_idx (int): row index of the pattern in the patterns dataframe
-        shapley_values (dict): dictionary of pattern scores: {pattern: score}
-        figsize (tuple): figure size
-        abbreviations (dict): dictionary of abbreviations to replace in the patterns - for visualization purposes
-        sort_by_value (bool): sort the Shapley values by value
-        height (float): height of the bars
-        linewidth (float): width of the bar border
-        labelsize (int): size of the labels
-        title (str): title of the plot
-
+        Plot the Shapley value of a pattern.
+        Specify either pattern or row_idx or shapley_value.
+        :param pattern: list of items
+        :param row_idx: row index of the pattern in the patterns dataframe
+        :param shapley_values: dictionary of pattern scores: {pattern: score}
+        :param figsize: figure size
+        :param abbreviations: dictionary of abbreviations to replace in the patterns - for visualization purposes
+        :param sort_by_value: sort the Shapley values by value
+        :param height: height of the bars
+        :param linewidth: width of the bar border
+        :param labelsize: size of the labels
+        :param title: title of the plot
+        :param x_label: x label
+        :param name_fig: name of the figure
+        :param save_fig: save the figure
+        :param show_figure: show the figure
         """
 
         assert (
@@ -167,15 +171,13 @@ class DivergencePatternProcessor:
     def redundancy_pruning(self, th_redundancy):
         """
         Prune the patterns that are redundant with respect to the divergence
-        Args:
-            th_redundancy (float): threshold for redundancy
-        Returns:
-            (pd.DataFrame) patterns without redundancy
+        :param th_redundancy: threshold for redundancy
+        :returns: a Pandas dataframe containing patterns without redundancy
 
-        Let I and  I \ {item i} be two patterns   (for example,  {sex=Male, age=<25} and {sex=Male})
+        Let I and  I - {item i} be two patterns   (for example,  {sex=Male, age=<25} and {sex=Male})
         If exist an item i such that it absolute marginal contribution is lower than a threshold epsilon,
-        i.e. abs( divergence(I) - divergence(I\{item i}) <= epsilon
-        We can prune I. The pattern 𝐼 \ {item i} captures the divergence of pattern 𝐼, since the inclusion of the item i only slightly alters the divergence
+        i.e. abs( divergence(I) - divergence(I - {item i}) <= epsilon
+        We can prune I. The pattern 𝐼 - {item i} captures the divergence of pattern 𝐼, since the inclusion of the item i only slightly alters the divergence
         In the example, we would keep just sex=Male
         We proceed in this way for all the patterns.
 
@@ -201,12 +203,9 @@ class DivergencePatternProcessor:
     def get_patterns(self, th_redundancy=None, sort_by_divergence=True):
         """
         Return the patterns
-        Args:
-            th_redundancy (float): threshold for redundancy - if None, no redundancy pruning
-            sort_by_divergence (bool): sort the patterns by divergence
-        Returns:
-            (pd.DataFrame) patterns with their divergence
-
+        :param th_redundancy: threshold for redundancy - if None, no redundancy pruning
+        :param sort_by_divergence: sort the patterns by divergence
+        :returns: a Pandas dataframe containing the patterns and their divergence
         """
         if th_redundancy is None:
             patterns = self.patterns
@@ -221,9 +220,7 @@ class DivergencePatternProcessor:
         """Compute the Global Shapley value of the patterns
         The Global Shapley value is a generalization of the Shapley value to the entire set of all items.
         It captures the role of an item in giving rise to divergence jointly with other attributes.
-
-        Returns:
-            (dict) Global Shapley value of the items across all frequent patterns - {item: global shapley value}
+        :returns: A dictionary associating each item to its Global Shapley value.
         """
         # Get 1-itemsets
         items = [item for item in self.dict_len_pattern_divergence[1].keys()]

@@ -54,11 +54,15 @@ def compute_welch_t_test(
 class DivergenceExplorer:
     def __init__(
         self,
-        df_discrete,
+        df,
         is_one_hot_encoding=False,
     ):
+        """
+        :param df: pandas dataframe.  The columns that one wishes to analyze with divexplorer should have discrete values. 
+        :param is_one_hot_encoding: boolean. If True, the dataframe attributes that one wishes to analyze are already one-hot encoded.
+        """
         # df_discrete: pandas dataframe with discrete values
-        self.df_discrete = df_discrete
+        self.df = df
 
         # is_one_hot_encoding: boolean, if True, the dataframe attributes are already one-hot encoded
         self.is_one_hot_encoding = is_one_hot_encoding
@@ -73,13 +77,17 @@ class DivergenceExplorer:
         show_coincise=True,
     ):
         """
-        Args:
-            min_support (float): minimum support value for the pattern
-            boolean_outcomes (list): list of boolean outcomes
-            quantitative_outcomes (list): list of quantitative outcomes
-            attributes (list): list of attributes to consider
-            FPM_algorithm (str): algorithm to use for frequent pattern mining
-            show_coincise (bool): if True, the output is more concise, returning only the average, the divergence and the t value
+        Computes the divergence of the specified outcomes.  One can specify two types of outcomes: boolean and quantitative.
+        The difference lies mainly in the way in which the statistical significance is computed: in both cases, we use
+        the Welch's t-test, but for boolean outcomes, we consider the outcomes as Bernoulli random variables. 
+        One can specify multiple outcomes simultaneously, as a way to speed up the computation when multiple divergences are needed 
+        (compared to computing them one by one).
+        :param min_support: minimum support value for the pattern
+        :param boolean_outcomes: list of boolean outcomes
+        :param quantitative_outcomes: list of quantitative outcomes
+        :param attributes: list of attributes to consider
+        :param FPM_algorithm: algorithm to use for frequent pattern mining
+        :param show_coincise: if True, the output is more concise, returning only the average, the divergence and the t value
         """
 
         assert FPM_algorithm in [
@@ -104,14 +112,14 @@ class DivergenceExplorer:
             # Get all attributes except outcomes
             attributes = [
                 attr
-                for attr in list(self.df_discrete.columns)
+                for attr in list(self.df.columns)
                 if attr not in boolean_outcomes + quantitative_outcomes
             ]
 
         # Get only the attributes specified
-        df_discrete = self.df_discrete[attributes]
+        df_discrete = self.df[attributes]
 
-        len_dataset = len(self.df_discrete)
+        len_dataset = len(self.df)
 
         if self.is_one_hot_encoding == False:
             # If it is not already one-hot encoded, we one-hot encode it
@@ -119,21 +127,21 @@ class DivergenceExplorer:
 
         if quantitative_outcomes:
             # If there are quantitative outcomes, we compute the squared outcome
-            df_outcomes = self.df_discrete[quantitative_outcomes].copy()
+            df_outcomes = self.df[quantitative_outcomes].copy()
             for outcome_name in quantitative_outcomes:
                 # Compute the squared outcome - we will use it for the divergence computation
 
                 df_outcomes.loc[:, f"{outcome_name}_SQUARED"] = (
-                    np.array(self.df_discrete[outcome_name].values) ** 2
+                    np.array(self.df[outcome_name].values) ** 2
                 )
         else:
             # We accumulate the outcomes
             df_outcomes = pd.DataFrame()
 
             for boolean_outcome in boolean_outcomes:
-                positive_outcomes = (self.df_discrete[boolean_outcome] == 1).astype(int)
-                negative_outcomes = (self.df_discrete[boolean_outcome] == 0).astype(int)
-                bottom_outcomes = self.df_discrete[boolean_outcome].isna().astype(int)
+                positive_outcomes = (self.df[boolean_outcome] == 1).astype(int)
+                negative_outcomes = (self.df[boolean_outcome] == 0).astype(int)
+                bottom_outcomes = self.df[boolean_outcome].isna().astype(int)
                 df_outcomes[f"{boolean_outcome}_positive"] = positive_outcomes
                 df_outcomes[f"{boolean_outcome}_negative"] = negative_outcomes
                 df_outcomes[f"{boolean_outcome}_bottom"] = bottom_outcomes
