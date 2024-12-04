@@ -85,7 +85,7 @@ class DivergenceExplorer:
         :param min_support: minimum support value for the pattern
         :param boolean_outcomes: list of boolean outcomes
         :param quantitative_outcomes: list of quantitative outcomes
-        :param attributes: list of attributes to consider
+        :param attributes: list of attributes to consider. If missing, all attributes except outcomes are considered. 
         :param FPM_algorithm: algorithm to use for frequent pattern mining
         :param show_coincise: if True, the output is more concise, returning only the average, the divergence and the t value
         """
