@@ -27,7 +27,6 @@ readme = "README.md"
 version = "0.2.3"
 
 [project.urls]
-Documentation = "Documentation.md"
 Homepage = "https://divexplorer.github.io/"
 Source = "https://github.com/DivExplorer/divexplorer"
 
