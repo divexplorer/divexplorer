@@ -24,7 +24,7 @@ license = {file = "LICENSE"}
 
 name = "DivExplorer"
 readme = "README.md"
-version = "0.2.4"
+version = "0.2.5"
 
 [project.urls]
 Homepage = "https://divexplorer.github.io/"
