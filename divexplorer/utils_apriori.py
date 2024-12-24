@@ -15,7 +15,7 @@ def apriori_divergence(
     max_len=None,
     verbose=0,
     low_memory=False,
-    cols_orderTP=["tn", "fp", "fn", "tp"],
+    target_matrix=["tn", "fp", "fn", "tp"],
     sortedV="support",
 ):
     """
@@ -85,16 +85,17 @@ def apriori_divergence(
     support = _support(X, X.shape[0], is_sparse)
     ary_col_idx = np.arange(X.shape[1])
     support_dict = {0: 1, 1: support[support >= min_support]}
-    itemset_dict = {0: [()], 1: ary_col_idx[support >= min_support].reshape(-1, 1)}
+    itemset_dict = {1: ary_col_idx[support >= min_support].reshape(-1, 1)}  # 0: [()],
     conf_metrics = {
-        0: np.asarray([sum_values(df_true_pred[cols_orderTP])]),
+        # 0: np.asarray([sum_values(df_true_pred[target_matrix])]),
         1: np.asarray(
             [
-                sum_values(filterColumns(df_true_pred, item)[cols_orderTP])
+                sum_values(filterColumns(df_true_pred, item)[target_matrix])
                 for item in itemset_dict[1]
             ]
         ),
     }
+
     max_itemset = 1
     rows_count = float(X.shape[0])
 
@@ -155,7 +156,7 @@ def apriori_divergence(
                 support_dict[next_max_itemset] = np.array(support[_mask])
                 conf_metrics[next_max_itemset] = np.asarray(
                     [
-                        sum_values(filterColumns(df_true_pred, itemset)[cols_orderTP])
+                        sum_values(filterColumns(df_true_pred, itemset)[target_matrix])
                         for itemset in itemset_dict[next_max_itemset]
                     ]
                 )
@@ -169,13 +170,13 @@ def apriori_divergence(
         support = pd.Series(support_dict[k])
         itemsets = pd.Series([frozenset(i) for i in itemset_dict[k]], dtype="object")
         # conf_matrix_col=pd.Series(list(conf_metrics[k]))
-        conf_metrics_cols = pd.DataFrame(list(conf_metrics[k]), columns=cols_orderTP)
+        conf_metrics_cols = pd.DataFrame(list(conf_metrics[k]), columns=target_matrix)
 
         res = pd.concat((support, itemsets, conf_metrics_cols), axis=1)
         all_res.append(res)
 
     res_df = pd.concat(all_res)
-    res_df.columns = ["support", "itemset"] + cols_orderTP
+    res_df.columns = ["support", "itemset"] + target_matrix
 
     if use_colnames:
         mapping = {idx: item for idx, item in enumerate(df.columns)}
@@ -184,7 +185,7 @@ def apriori_divergence(
         )
 
     res_df["length"] = res_df["itemset"].str.len()
-    res_df["support_count"] = np.sum(res_df[cols_orderTP], axis=1)
+    res_df["support_count"] = np.sum(res_df[target_matrix], axis=1)
 
     res_df.sort_values(sortedV, ascending=False, inplace=True)
     res_df = res_df.reset_index(drop=True)
