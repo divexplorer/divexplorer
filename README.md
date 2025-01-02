@@ -140,13 +140,28 @@ df_pruned = fp_details.redundancy_pruning(th_redundancy=0.01)
 df_pruned.sort_values("fp_div", ascending=False).head(5)
 ```
 
+## Frequent-Pattern Mining Algorithms
+
+DivExplorer can use one of two frequent-pattern mining algorithms: `fpgrowth` and `apriori`. 
+The default is `fpgrowth`, which is faster; you can switch to `apriori` by specifying `algorithm='apriori'` in the `get_pattern_divergence` method.  The advantage of the `apriori` algorithm is that it can be more memory-efficient, and it provides fine controls for dealing with large datasets and many items. 
+
+The `fpgrowth` algorithm is derived from the `mlxtend` library. 
+The `apriori` algorithm is derived from the paper:
+
+> Brin, Sergey, Rajeev Motwani, Jeffrey D. Ullman, and Shalom Tsur. “Dynamic Itemset Counting and Implication Rules for Market Basket Data.” In Proceedings of the 1997 ACM SIGMOD International Conference on Management of Data  - SIGMOD ’97, 255–64. Tucson, Arizona, United States: ACM Press, 1997. https://doi.org/10.1145/253260.253325.
+
+To the ideas in that paper, several optimization have been added which allow to control the memory usage and the number of items in the output. Specifically:
+
+* The dataset is shuffled with a random seed, and for each itemset, only the first `max_instances` instances are considered (default: `None`, meaning all instances).
+* You can specify the maximum number of items in an itemset, with `max_items` (default: `None`, meaning all items).
+* The original algorithm waited to consider a node "large" until it had accumulated a count corresponding to the minimum support.  We declare a node "large" using a statistical test, looking at the rate at which it is accumulating counts.  This allows us to add nodes faster, concluding the count faster. 
+* We keep track of which portions of the apriori tree are still actively counting, allowing for a more efficient tallying of counts.
+
 ## Code Contributors
 
-Project lead:
-
 - [Eliana Pastor](https://github.com/elianap)
+- [Luca de Alfaro](https://luca.dealfaro.com/)
 
 Other contributors: 
 
-- [Luca de Alfaro](https://luca.dealfaro.com/)
 - [Harsh Dadhich]()

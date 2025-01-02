@@ -1,3 +1,5 @@
+import pandas as pd
+
 # These fields are available in the patterns dataframe and we always want to keep them
 BASE_COLUMNS = ["support", "itemset", "length", "support_count"]
 
@@ -73,6 +75,14 @@ class DivergencePatternProcessor:
         from divexplorer.shapley_value import compute_shapley_value
 
         return compute_shapley_value(pattern, self.dict_len_pattern_divergence)
+    
+    def shapley_value_df(self, pattern=None, row_idx=None):
+        """Computes the Shapley value of items in an itemset and returns a dataframe."""
+        d = {"Item": [], "Shapley Value": []}
+        for item, value in self.shapley_value(pattern=pattern, row_idx=row_idx).items():
+            d["Item"].append(item)
+            d["Shapley Value"].append(value)
+        return pd.DataFrame(d)
 
     def plot_shapley_value(
         self,
@@ -250,3 +260,11 @@ class DivergencePatternProcessor:
             )
 
         return global_shapley
+
+    def global_shapley_value_df(self):
+        """Compute the Global Shapley value of the patterns and return a dataframe."""
+        d = {"Item": [], "Global Shapley Value": []}
+        for item, value in self.global_shapley_value().items():
+            d["Item"].append(item)
+            d["Global Shapley Value"].append(value)
+        return pd.DataFrame(d)
