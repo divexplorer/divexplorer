@@ -145,7 +145,7 @@ df_pruned.sort_values("fp_div", ascending=False).head(5)
 DivExplorer can use one of two frequent-pattern mining algorithms: `fpgrowth` and `apriori`. 
 The default is `fpgrowth`, which is faster; you can switch to `apriori` by specifying `algorithm='apriori'` in the `get_pattern_divergence` method.  The advantage of the `apriori` algorithm is that it can be more memory-efficient, and it provides fine controls for dealing with large datasets and many items. 
 
-The `fpgrowth` algorithm is derived from the `mlxtend` library. 
+The `fpgrowth` algorithm is adapted from the [mlxtend](https://rasbt.github.io/mlxtend/) library. 
 The `apriori` algorithm is derived from the paper:
 
 > Brin, Sergey, Rajeev Motwani, Jeffrey D. Ullman, and Shalom Tsur. “Dynamic Itemset Counting and Implication Rules for Market Basket Data.” In Proceedings of the 1997 ACM SIGMOD International Conference on Management of Data  - SIGMOD ’97, 255–64. Tucson, Arizona, United States: ACM Press, 1997. https://doi.org/10.1145/253260.253325.
