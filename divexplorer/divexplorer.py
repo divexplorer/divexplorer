@@ -100,7 +100,7 @@ class DivergenceExplorer:
         boolean_outcomes: list = None,
         quantitative_outcomes: list = None,
         attributes: list = None,
-        FPM_algorithm="apriori",
+        FPM_algorithm="fpgrowth",
         show_coincise=True,
     ):
         """
@@ -173,11 +173,11 @@ class DivergenceExplorer:
             # First, the column for the entire dataset. 
             df_dict['itemset'] = [frozenset()]
             df_dict['support'] = [e.root.support]
-            df_dict['count'] = [e.root.count]
+            df_dict['support_count'] = [e.root.count]
             df_dict['length'] = [0]
             for i, c in enumerate(boolean_outcomes + quantitative_outcomes):
                 df_dict[f'{c}_count'] = [e.root.count_not_nan[i]]
-                df_dict[f'{c}_avg'] = [e.root.totals[i] / e.root.count_not_nan[i]]
+                df_dict[f'{c}'] = [e.root.totals[i] / e.root.count_not_nan[i]]
                 df_dict[f'{c}_div'] = [0] # The divergence is 0 by definition.
                 df_dict[f'{c}_t'] = [float('inf')] # The t value is inf by definition.
             # We add data for all other rows. 
@@ -186,12 +186,12 @@ class DivergenceExplorer:
                     continue # Skip the root; we included it already. 
                 df_dict['itemset'].append(frozenset([e.repr_item(i) for i in itemset]))
                 df_dict['support'].append(node.support)
+                df_dict['support_count'].append(node.count)
                 df_dict['length'].append(len(itemset))
-                df_dict['count'].append(node.count)
                 for i, c in enumerate(boolean_outcomes + quantitative_outcomes):
                     df_dict[f'{c}_count'].append(node.count_not_nan[i])
                     avg = node.totals[i] / node.count_not_nan[i]
-                    df_dict[f'{c}_avg'].append(avg)
+                    df_dict[f'{c}'].append(avg)
                     df_dict[f'{c}_div'].append(avg - (e.root.totals[i] / e.root.count_not_nan[i]))
                     # The calculation of the t-value differs for boolean and quantitative outcomes.
                     if c in boolean_outcomes:
