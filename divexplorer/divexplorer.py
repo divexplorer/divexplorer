@@ -338,7 +338,7 @@ class DivergenceExplorer:
                 ] = 0  # The divergence is 0 by definition
                 all_dataset_row[
                     f"{quantitative_outcome}_t"
-                ] = float(inf)  # The t value is inf by definition
+                ] = float("inf")  # The t value is inf by definition
 
                 # Compute the average of the all dataset row -- as above
                 overall_average = all_dataset_row[quantitative_outcome] / len_dataset
