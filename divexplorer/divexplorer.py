@@ -1,9 +1,6 @@
 import numpy as np
 import pandas as pd
 
-from divexplorer.utils_FPgrowth import fpgrowth_cm
-
-
 def get_df_one_hot_encoding(df_input):
     # One-hot encoding of the dataframe
     attributes = df_input.columns
@@ -131,7 +128,8 @@ class DivergenceExplorer:
         assert FPM_algorithm in [
             "fpgrowth",
             "apriori",
-        ], f"{FPM_algorithm} algorithm is not handled. We integrate the DivExplorer computation in 'fpgrowth' and 'apriori' algorithms."
+            "new_apriori"
+        ], f"{FPM_algorithm} algorithm is not handled."
 
         # Sets the default values for lists. 
         quantitative_outcomes = quantitative_outcomes or []
@@ -146,9 +144,9 @@ class DivergenceExplorer:
                 if attr not in boolean_outcomes + quantitative_outcomes
             ]
 
-        if FPM_algorithm == "apriori":
+        if FPM_algorithm == "new_apriori":
             assert len(boolean_outcomes) + len(quantitative_outcomes) > 0, "Some outcome must be specified"
-            from divexplorer.utils_apriori import Explorer
+            from divexplorer.utils_new_apriori import Explorer
             e = Explorer(self.df,
                          columns=attributes,
                          target_columns=boolean_outcomes + quantitative_outcomes, 
@@ -203,29 +201,41 @@ class DivergenceExplorer:
                             e.root.count_not_nan[i], e.root.totals[i], e.root.totals_squared[i])
                     df_dict[f'{c}_t'].append(t)
             return pd.DataFrame(df_dict)
+    
         
-        # FPGrowth algorithm. 
-        assert FPM_algorithm == "fpgrowth"
-        assert (
-            len(boolean_outcomes) > 0 or len(quantitative_outcomes) > 0
-        ), "At least one outcome must be specified."
-        assert (
-            len(boolean_outcomes) == 0 or len(quantitative_outcomes) == 0
-        ), "Only one type of outcome must be specified."
+        if max_length is not None and FPM_algorithm == "fpgrowth":
+            import warnings
+
+            warnings.warn(
+                'The parameter "max_len" is only used for the apriori algorithm. The parameter will be ignored.'
+            )
+
         # Get only the attributes specified
-        len_dataset = len(self.df)
         df_discrete = self.df[attributes]
+
+        len_dataset = len(self.df)
+
+        target_outcomes_names = []
+
+        if self.is_one_hot_encoding == False:
+            # If it is not already one-hot encoded, we one-hot encode it
+            df_ohe = get_df_one_hot_encoding(df_discrete)
+
         if quantitative_outcomes:
             # If there are quantitative outcomes, we compute the squared outcome
             df_outcomes = self.df[quantitative_outcomes].copy()
             for outcome_name in quantitative_outcomes:
                 # Compute the squared outcome - we will use it for the divergence computation
+
                 df_outcomes.loc[:, f"{outcome_name}_SQUARED"] = (
                     np.array(self.df[outcome_name].values) ** 2
                 )
+
+                target_outcomes_names.extend([outcome_name, f"{outcome_name}_SQUARED"])
         else:
             # We accumulate the outcomes
             df_outcomes = pd.DataFrame()
+
             for boolean_outcome in boolean_outcomes:
                 positive_outcomes = (self.df[boolean_outcome] == 1).astype(int)
                 negative_outcomes = (self.df[boolean_outcome] == 0).astype(int)
@@ -233,24 +243,41 @@ class DivergenceExplorer:
                 df_outcomes[f"{boolean_outcome}_positive"] = positive_outcomes
                 df_outcomes[f"{boolean_outcome}_negative"] = negative_outcomes
                 df_outcomes[f"{boolean_outcome}_bottom"] = bottom_outcomes
+                target_outcomes_names.extend(
+                    [
+                        f"{boolean_outcome}_positive",
+                        f"{boolean_outcome}_negative",
+                        f"{boolean_outcome}_bottom",
+                    ]
+                )
 
-        if self.is_one_hot_encoding == False:
-            # If it is not already one-hot encoded, we one-hot encode it.
-            df_ohe = get_df_one_hot_encoding(df_discrete)
+        if FPM_algorithm == "fpgrowth":
+            from divexplorer.utils_FPgrowth import fpgrowth_cm
+            df_divergence = fpgrowth_cm(
+                df_ohe.copy(),  # Df with one-hot encoded attributes
+                df_outcomes,  # Df with outcomes
+                min_support=min_support,  # Minimum support
+                columns_accumulate=list(df_outcomes.columns),  # Columns to accumulate
+            )
         else:
-            df_ohe = df_discrete
-        df_itemsets = fpgrowth_cm(
-            df_ohe.copy(),  # Df with one-hot encoded attributes
-            df_outcomes,  # Df with outcomes
-            min_support=min_support,  # Minimum support
-            columns_accumulate=list(df_outcomes.columns),  # Columns to accumulate
-        )
-        
+            # We use the apriori algorithm
+            df_with_outcomes = pd.concat([df_ohe, df_outcomes], axis=1)
+
+            from divexplorer.utils_apriori import apriori_divergence
+
+            df_divergence = apriori_divergence(
+                df_ohe.copy(),
+                df_with_outcomes,
+                min_support=min_support,
+                target_matrix=target_outcomes_names,
+                max_len=max_length,
+            )
+
         all_dataset_row = {"support": 1, "itemset": frozenset()}
 
         cols_to_drop = []
         squared_cols_to_drop = []
-        
+
         if boolean_outcomes:
             for boolean_outcome in boolean_outcomes:
                 # The result is average when non considering the bottom values
@@ -262,9 +289,9 @@ class DivergenceExplorer:
                 negative_col_name = f"{boolean_outcome}_negative"
                 bottom_col_name = f"{boolean_outcome}_bottom"
 
-                df_itemsets[boolean_outcome] = compute_outcome(
-                    df_itemsets[positive_col_name],
-                    df_itemsets[negative_col_name],
+                df_divergence[boolean_outcome] = compute_outcome(
+                    df_divergence[positive_col_name],
+                    df_divergence[negative_col_name],
                 )
 
                 cols_to_drop.extend(
@@ -279,12 +306,12 @@ class DivergenceExplorer:
                 ]:
                     all_dataset_row[column_name] = df_outcomes[column_name].sum()
 
-                all_dataset_row[
-                    f"{boolean_outcome}_div"
-                ] = 0  # The divergence is 0 by definition
-                all_dataset_row[
-                    f"{boolean_outcome}_t"
-                ] = 0  # The t value is 0 by definition
+                all_dataset_row[f"{boolean_outcome}_div"] = (
+                    0  # The divergence is 0 by definition
+                )
+                all_dataset_row[f"{boolean_outcome}_t"] = (
+                    0  # The t value is 0 by definition
+                )
 
                 # Compute the average of the all dataset row -- as above
                 overall_average = compute_outcome(
@@ -296,31 +323,31 @@ class DivergenceExplorer:
                 all_dataset_row[boolean_outcome] = overall_average
 
                 # Compute the divergence
-                df_itemsets[f"{boolean_outcome}_div"] = (
-                    df_itemsets[boolean_outcome] - overall_average
+                df_divergence[f"{boolean_outcome}_div"] = (
+                    df_divergence[boolean_outcome] - overall_average
                 )
 
                 # Compute the t value
 
                 # Get the positive and negative values
                 pos, neg = (
-                    df_itemsets[positive_col_name].values,
-                    df_itemsets[negative_col_name].values,
+                    df_divergence[positive_col_name].values,
+                    df_divergence[negative_col_name].values,
                 )
 
                 # We append the pos and neg values of the all dataset row
                 pos = np.concatenate([[all_dataset_row[positive_col_name]], pos])
                 neg = np.concatenate([[all_dataset_row[negative_col_name]], neg])
                 t = get_t_value_bayesian(pos, neg, 0)
-                df_itemsets[f"{boolean_outcome}_t"] = t[
+                df_divergence[f"{boolean_outcome}_t"] = t[
                     1:
                 ]  # We omit the all dataset row
 
         else:
             for quantitative_outcome in quantitative_outcomes:
-                df_itemsets[quantitative_outcome] = (
-                    df_itemsets[quantitative_outcome]
-                    / (df_itemsets["support"] * len_dataset).round()
+                df_divergence[quantitative_outcome] = (
+                    df_divergence[quantitative_outcome]
+                    / (df_divergence["support"] * len_dataset).round()
                 )
 
                 quantitative_outcome_squared = f"{quantitative_outcome}_SQUARED"
@@ -333,12 +360,12 @@ class DivergenceExplorer:
                 ]:
                     all_dataset_row[column_name] = df_outcomes[column_name].sum()
 
-                all_dataset_row[
-                    f"{quantitative_outcome}_div"
-                ] = 0  # The divergence is 0 by definition
-                all_dataset_row[
-                    f"{quantitative_outcome}_t"
-                ] = float("inf")  # The t value is inf by definition
+                all_dataset_row[f"{quantitative_outcome}_div"] = (
+                    0  # The divergence is 0 by definition
+                )
+                all_dataset_row[f"{quantitative_outcome}_t"] = (
+                    0  # The t value is 0 by definition
+                )
 
                 # Compute the average of the all dataset row -- as above
                 overall_average = all_dataset_row[quantitative_outcome] / len_dataset
@@ -347,16 +374,16 @@ class DivergenceExplorer:
                 all_dataset_row[quantitative_outcome] = overall_average
 
                 # Compute the divergence
-                df_itemsets[f"{quantitative_outcome}_div"] = (
-                    df_itemsets[quantitative_outcome] - overall_average
+                df_divergence[f"{quantitative_outcome}_div"] = (
+                    df_divergence[quantitative_outcome] - overall_average
                 )
 
                 # Compute the t value with Welch's t-test
-                squared_values = df_itemsets[quantitative_outcome_squared].values
+                squared_values = df_divergence[quantitative_outcome_squared].values
                 support_count_values = (
-                    df_itemsets["support"].values * len_dataset
+                    df_divergence["support"].values * len_dataset
                 ).round()
-                mean_values = df_itemsets[quantitative_outcome].values
+                mean_values = df_divergence[quantitative_outcome].values
 
                 # We append the pos and neg values of the all dataset row
                 squared_values = np.concatenate(
@@ -372,26 +399,26 @@ class DivergenceExplorer:
                 t = get_welch_t_test(
                     squared_values, support_count_values, mean_values, 0
                 )
-                df_itemsets[f"{quantitative_outcome}_t"] = t[
+                df_divergence[f"{quantitative_outcome}_t"] = t[
                     1:
                 ]  # We omit the all dataset row
 
         # Add the all dataset row
-        df_itemsets.loc[
-            len(df_itemsets), all_dataset_row.keys()
-        ] = all_dataset_row.values()
+        df_divergence.loc[len(df_divergence), all_dataset_row.keys()] = (
+            all_dataset_row.values()
+        )
 
-        df_itemsets["length"] = df_itemsets["itemset"].str.len()
-        df_itemsets["support_count"] = (
-            df_itemsets["support"] * len_dataset
+        df_divergence["length"] = df_divergence["itemset"].str.len()
+        df_divergence["support_count"] = (
+            df_divergence["support"] * len_dataset
         ).round()
-        df_itemsets = df_itemsets.reset_index(drop=True)
+        df_divergence = df_divergence.reset_index(drop=True)
 
-        df_itemsets.sort_values("support", ascending=False, inplace=True)
-        df_itemsets = df_itemsets.reset_index(drop=True)
+        df_divergence.sort_values("support", ascending=False, inplace=True)
+        df_divergence = df_divergence.reset_index(drop=True)
 
         if show_coincise:
-            df_itemsets = df_itemsets.drop(columns=cols_to_drop)
-        df_itemsets = df_itemsets.drop(columns=squared_cols_to_drop)
-        
-        return df_itemsets
+            df_divergence = df_divergence.drop(columns=cols_to_drop)
+        df_divergence = df_divergence.drop(columns=squared_cols_to_drop)
+
+        return df_divergence
