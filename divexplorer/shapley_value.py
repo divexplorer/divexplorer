@@ -91,6 +91,8 @@ def weight_factor_global_shapley_value(lB, lA, lI, prod_mb):
     # \frac{|B|! (|A|-|B|-|I|)!} {|A|! \prod_{b \in B \cup attr(I)} m_b}
     import math
 
+    prod_mb = int(prod_mb)
+
     return (math.factorial(lB) * math.factorial(lA - lB - lI)) / (
         math.factorial(lA) * (prod_mb)
     )

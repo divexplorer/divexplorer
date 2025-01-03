@@ -81,7 +81,7 @@ class DivergenceExplorer:
         is_one_hot_encoding=False,
     ):
         """
-        :param df: pandas dataframe.  The columns that one wishes to analyze with divexplorer should have discrete values. 
+        :param df: pandas dataframe.  The columns that one wishes to analyze with divexplorer should have discrete values.
         :param is_one_hot_encoding: boolean. If True, the dataframe attributes that one wishes to analyze are already one-hot encoded.
             This is useful only for the fpgrowth algorithm; the apriori one can deal with non-one-hot encoded attributes.
         """
@@ -102,19 +102,20 @@ class DivergenceExplorer:
         attributes: list = None,
         FPM_algorithm="fpgrowth",
         show_coincise=True,
+        max_len=None,
     ):
         """
         Computes the divergence of the specified outcomes.  One can specify two types of outcomes: boolean and quantitative.
         The difference lies mainly in the way in which the statistical significance is computed: in both cases, we use
-        the Welch's t-test, but for boolean outcomes, we consider the outcomes as Bernoulli random variables. 
-        One can specify multiple outcomes simultaneously, as a way to speed up the computation when multiple divergences are needed 
+        the Welch's t-test, but for boolean outcomes, we consider the outcomes as Bernoulli random variables.
+        One can specify multiple outcomes simultaneously, as a way to speed up the computation when multiple divergences are needed
         (compared to computing them one by one).
         :param min_support: minimum support value for the pattern
         :param max_length: maximum length of the patterns
         :param max_instances: maximum number of instances that are read for each itemset. 
         :param boolean_outcomes: list of boolean outcomes
         :param quantitative_outcomes: list of quantitative outcomes
-        :param attributes: list of attributes to consider. If missing, all attributes except outcomes are considered. 
+        :param attributes: list of attributes to consider. If missing, all attributes except outcomes are considered.
         :param FPM_algorithm: algorithm to use for frequent pattern mining
         :param show_coincise: if True, the output is more concise, returning only the average, the divergence and the t value.
         :param seed: seed for the random number generator used to shuffle the dataset in the rand_apriori algorithm.
@@ -133,7 +134,7 @@ class DivergenceExplorer:
             "apriori",
         ], f"{FPM_algorithm} algorithm is not handled. We integrate the DivExplorer computation in 'fpgrowth' and 'apriori' algorithms."
 
-        # Sets the default values for lists. 
+        # Sets the default values for lists.
         quantitative_outcomes = quantitative_outcomes or []
         boolean_outcomes = boolean_outcomes or []
         attributes = attributes or []
@@ -223,6 +224,8 @@ class DivergenceExplorer:
                 df_outcomes.loc[:, f"{outcome_name}_SQUARED"] = (
                     np.array(self.df[outcome_name].values) ** 2
                 )
+
+                target_outcomes_names.extend([outcome_name, f"{outcome_name}_SQUARED"])
         else:
             # We accumulate the outcomes
             df_outcomes = pd.DataFrame()
@@ -233,6 +236,13 @@ class DivergenceExplorer:
                 df_outcomes[f"{boolean_outcome}_positive"] = positive_outcomes
                 df_outcomes[f"{boolean_outcome}_negative"] = negative_outcomes
                 df_outcomes[f"{boolean_outcome}_bottom"] = bottom_outcomes
+                target_outcomes_names.extend(
+                    [
+                        f"{boolean_outcome}_positive",
+                        f"{boolean_outcome}_negative",
+                        f"{boolean_outcome}_bottom",
+                    ]
+                )
 
         if self.is_one_hot_encoding == False:
             # If it is not already one-hot encoded, we one-hot encode it.
@@ -250,7 +260,7 @@ class DivergenceExplorer:
 
         cols_to_drop = []
         squared_cols_to_drop = []
-        
+
         if boolean_outcomes:
             for boolean_outcome in boolean_outcomes:
                 # The result is average when non considering the bottom values
@@ -279,12 +289,12 @@ class DivergenceExplorer:
                 ]:
                     all_dataset_row[column_name] = df_outcomes[column_name].sum()
 
-                all_dataset_row[
-                    f"{boolean_outcome}_div"
-                ] = 0  # The divergence is 0 by definition
-                all_dataset_row[
-                    f"{boolean_outcome}_t"
-                ] = 0  # The t value is 0 by definition
+                all_dataset_row[f"{boolean_outcome}_div"] = (
+                    0  # The divergence is 0 by definition
+                )
+                all_dataset_row[f"{boolean_outcome}_t"] = (
+                    0  # The t value is 0 by definition
+                )
 
                 # Compute the average of the all dataset row -- as above
                 overall_average = compute_outcome(
@@ -338,7 +348,7 @@ class DivergenceExplorer:
                 ] = 0  # The divergence is 0 by definition
                 all_dataset_row[
                     f"{quantitative_outcome}_t"
-                ] = float("inf")  # The t value is inf by definition
+                ] = float(0)  # The t value is 0 by definition
 
                 # Compute the average of the all dataset row -- as above
                 overall_average = all_dataset_row[quantitative_outcome] / len_dataset
