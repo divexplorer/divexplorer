@@ -165,7 +165,12 @@ We added to the above algorithm options and optimizations that speed up the comp
 
 ## Code Contributors
 
+Project Lead: 
+
 - [Eliana Pastor](https://github.com/elianap)
+
+Contributors: 
+
 - [Luca de Alfaro](https://luca.dealfaro.com/)
 
 Other contributors: 
