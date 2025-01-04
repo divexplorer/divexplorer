@@ -142,26 +142,21 @@ df_pruned.sort_values("fp_div", ascending=False).head(5)
 
 ##  Algorithms
 
-DivExplorer can use one of two frequent-pattern mining algorithms: `fpgrowth` and `apriori`. 
-The default is `fpgrowth`, which is faster; you can switch to `apriori` by specifying `algorithm='apriori'` in the `get_pattern_divergence` method.  The advantage of the `apriori` algorithm is that it can be more memory-efficient, and it provides fine controls for dealing with large datasets and many items.  We recommend using `fpgrowth` for most cases, and switching to `apriori` if you run into memory issues.
+DivExplorer can multiple frequent-pattern mining algorithms: `fpgrowth`, `apriori`, and `alt_apriori`. 
+The default is `fpgrowth`, which is faster; you can switch to `apriori` by specifying `algorithm='apriori'` in the `get_pattern_divergence` method.  The advantage of the `apriori` algorithm is that it can be more memory-efficient. The `alt_apriori` algorithm is memory-efficient but slower.
 
-The `fpgrowth` algorithm is adapted from the [mlxtend](https://rasbt.github.io/mlxtend/) library. 
-The `apriori` algorithm is derived from the paper:
+The `fpgrowth` and `apriori` algorithms are adapted from the [mlxtend](https://rasbt.github.io/mlxtend/) library. 
+The `alt_apriori` algorithm is derived from the paper:
 
-> Brin, Sergey, Rajeev Motwani, Jeffrey D. Ullman, and Shalom Tsur. “Dynamic Itemset Counting and Implication Rules for Market Basket Data.” In Proceedings of the 1997 ACM SIGMOD International Conference on Management of Data  - SIGMOD ’97, 255–64. Tucson, Arizona, United States: ACM Press, 1997. https://doi.org/10.1145/253260.253325.
+> Sergey Brin, Rajeev Motwani, Jeffrey D. Ullman, and Shalom Tsur. “Dynamic Itemset Counting and Implication Rules for Market Basket Data.” In Proceedings of the 1997 ACM SIGMOD International Conference on Management of Data  - SIGMOD ’97, 255–64. Tucson, Arizona, United States: ACM Press, 1997. https://doi.org/10.1145/253260.253325.
 
 We added to the above algorithm options and optimizations that speed up the computation and allow limiting the memory used. 
 
-### Options
-
-* The dataset is shuffled with a random seed, and for each itemset, only the first `max_instances` instances are considered (default: `None`, meaning all instances).  For example, if you want to use a support limit of 0.01, choosing `max_instances=10000` guarantees that every frequent itemset will be supported by at least 100 instances, allowing for the computation of somewhat reliable divergence values.   If the dataset is very large (in number of instances), this can lead to considerable speedup. 
+### `alt_apriori` options
 
 * You can specify the maximum number of items in an itemset, with `max_items` (default: `None`, meaning all items). For instance, if finding itemsets with at most 4 items suffices, you can specify `max_items=4`.
 
-### Optimizations
-
-* The original algorithm waited to consider a node "large" until it had accumulated a count corresponding to the minimum support.  We declare a node "large" using a statistical test, looking at the rate at which it is accumulating counts.  This allows us to add nodes faster, concluding the count faster. 
-* We keep track of which portions of the apriori tree are still actively counting, allowing for a more efficient tallying of counts.
+* The dataset is shuffled with a random seed, and for each itemset, only the first `max_instances` instances are considered (default: `None`, meaning all instances).  For example, if you want to use a support limit of 0.01, choosing `max_instances=10000` guarantees that every frequent itemset will be supported by at least 100 instances, allowing for the computation of somewhat reliable divergence values.   If the dataset is very large (in number of instances), this can lead to considerable speedup. 
 
 ## Code Contributors
 
