@@ -52,15 +52,11 @@ class Node(object):
         @param x: the value to increment the node by.
         @param current_time: the current time.
         """
-        if current_time > self.stop_time:
-            self.counting = False
-            return True # It stopped. 
-        if self.counting:
+        if current_time <= self.stop_time:
             self.count += 1
             self.count_not_nan += (1 - np.isnan(xs).astype(int))
             self.totals += np.nan_to_num(xs, nan=0)
             self.totals_squared += np.nan_to_num(xs ** 2, nan=0)
-            return False 
             
     def is_counting(self, current_time):
         """Checks whether the node is counting.  Returns 
@@ -164,27 +160,48 @@ class Explorer(object):
         return row_indices
     
         
-    def _increment_tree(self, item_list, row_items, xs, current_time):
+    def _increment_tree(self, node_items, additional_row_items, xs, current_time, tainted=False):
         """Increments the counts in the tree.
         @param item_list: list of items defining the node to increment. 
         @param row_items: list of items defining the remaining row items to process. 
         @param x: the value of the target variable.
         Here, node is the root note to increment, and items is the list of items. 
         As nodes are represented as list of items (their path from the root), the node is also a list of items."""
-        item_list_tuple = tuple(item_list)
+        item_list_tuple = tuple(node_items)
         node = self.tree[item_list_tuple]
         if node.subtree_size == 0:
             return
-        if node.inc(xs, current_time):
-            # The subtree size decreased. 
-            node.subtree_size -= 1
-            for k in range(len(item_list_tuple)):
-                self.tree[item_list_tuple[:k]].subtree_size -= 1
+        if tainted and current_time <= node.stop_time:
+            print(f"Node {item_list_tuple} is tainted and counting: {current_time}, {node.stop_time}, {node.subtree_size}.")
+            print("Parents:")
+            for i in range(len(item_list_tuple)):
+                print(f"Node {item_list_tuple[:i]}: {current_time}, {node.stop_time}, {node.subtree_size}.")
+            assert False, f"Node {item_list_tuple} is tainted and counting."
+        if current_time <= node.stop_time:
+            assert node.subtree_size > 0, f"A node {item_list_tuple} with 0 subtree size is counting."
+            # Checks that also all parents have size above 0. 
+            for i in range(len(item_list_tuple)):
+                if self.tree[item_list_tuple[:i]].subtree_size <= 0:
+                    print(f"Node {item_list_tuple} is counting and parent {item_list_tuple[:i]} with subtree size 0.")
+                assert self.tree[item_list_tuple[:i]].subtree_size > 0, "A parent of a counting node has 0 subtree size."
         if node.subtree_size > 0:
-            for i, item in enumerate(row_items):
-                if tuple(item_list + [item]) in self.tree:
-                    self._increment_tree(item_list + [item], row_items[i + 1:], xs, current_time)
-
+            # Checks that also all parents have size above 0. 
+            for i in range(len(item_list_tuple)):
+                if self.tree[item_list_tuple[:i]].subtree_size <= 0:
+                    print(f"Node {item_list_tuple} has subtree size {node.subtree_size} and parent {item_list_tuple[:i]} with subtree size 0.")
+                assert self.tree[item_list_tuple[:i]].subtree_size > 0, "A parent of a node with >0 subtree size has 0 subtree size."
+        if node.subtree_size <= 0:
+            tainted = True
+            if current_time <= node.stop_time: 
+                print(f"Node {item_list_tuple} has subtree size 0 and is counting: {current_time}, {node.stop_time}.")
+            assert current_time > node.stop_time, f"Node {item_list_tuple} has subtree size 0 and is counting: {current_time}, {node.stop_time}."
+            if node.counting:
+                print(f"Node {item_list_tuple} has subtree size 0 and is counting.")
+            assert not node.counting, f"Node {item_list_tuple} has subtree size 0 and is counting."
+        node.inc(xs, current_time)
+        for i, item in enumerate(additional_row_items):
+            if tuple(node_items + [item]) in self.tree:
+                self._increment_tree(node_items + [item], additional_row_items[i + 1:], xs, current_time, tainted=tainted)
     
     def _process_row(self, row, current_time):
         """Reads and processes a row, incrementing the counts."""
@@ -243,6 +260,7 @@ class Explorer(object):
                         # Increments the subtree size of the parents. 
                         for k in range(len(candidate_itemset)):
                             self.tree[candidate_itemset[:k]].subtree_size += 1
+                            assert self.tree[candidate_itemset[:k]].subtree_size > 0, "A parent of a new node has 0 subtree size."
         return added
 
 
@@ -250,6 +268,7 @@ class Explorer(object):
         """Updates the tree, promoting and adding nodes. 
         Returns whether we can stop the analysis."""
         can_stop = True
+        # First, checks whether we can add children. 
         for itemset in list(self.tree.keys()):
             node = self.tree[itemset]
             if node.is_small and self._maybe_large(node, current_time):
@@ -258,10 +277,14 @@ class Explorer(object):
                 if self._can_add_children(itemset, current_time):
                     if self._add_children(itemset, current_time):
                         can_stop = False # Can't stop if we add a node.
+        # Then, checks whether we can stop.     
+        for itemset, node in self.tree.items():
             is_counting, has_stopped = node.is_counting(current_time)
             if has_stopped:
+                assert node.subtree_size > 0, "A node with 0 subtree size has stopped."
                 node.subtree_size -= 1
                 for k in range(len(itemset)):
+                    assert self.tree[itemset[:k]].subtree_size > 0, "A parent node has 0 subtree size."
                     self.tree[itemset[:k]].subtree_size -= 1
             if is_counting:
                 can_stop = False # Can't stop if we have a node that is not stopped.
@@ -271,6 +294,7 @@ class Explorer(object):
     def compute_frequent_itemsets(self, seed=1):
         """Computes the frequent itemsets.
         @param seed: seed for dataset shuffling."""
+        print("new_apriori")
         df_shuffled = self.df.sample(frac=1, random_state=seed)
         epochs = 0
         n = 0
