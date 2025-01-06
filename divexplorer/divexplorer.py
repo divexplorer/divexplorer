@@ -146,7 +146,7 @@ class DivergenceExplorer:
 
         if FPM_algorithm == "new_apriori":
             assert len(boolean_outcomes) + len(quantitative_outcomes) > 0, "Some outcome must be specified"
-            from divexplorer.utils_new_apriori import Explorer
+            from divexplorer.utils_alt_apriori import Explorer
             e = Explorer(self.df,
                          columns=attributes,
                          target_columns=boolean_outcomes + quantitative_outcomes, 
