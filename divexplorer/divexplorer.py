@@ -174,6 +174,7 @@ class DivergenceExplorer:
                 columns_accumulate=list(df_outcomes.columns),  # Columns to accumulate
             )
         else:
+            df_outcomes.index = df_ohe.index
             # We use the apriori algorithm
             df_with_outcomes = pd.concat([df_ohe, df_outcomes], axis=1)
 
@@ -333,6 +334,6 @@ class DivergenceExplorer:
 
         if show_coincise:
             df_divergence = df_divergence.drop(columns=cols_to_drop)
-        df_divergence = df_divergence.drop(columns=squared_cols_to_drop)
+        # df_divergence = df_divergence.drop(columns=squared_cols_to_drop)
 
         return df_divergence
