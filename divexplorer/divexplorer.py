@@ -138,15 +138,24 @@ class DivergenceExplorer:
 
         if quantitative_outcomes:
             # If there are quantitative outcomes, we compute the squared outcome
-            df_outcomes = self.df[quantitative_outcomes].copy()
+            df_outcomes = pd.DataFrame()
             for outcome_name in quantitative_outcomes:
                 # Compute the squared outcome - we will use it for the divergence computation
-
-                df_outcomes.loc[:, f"{outcome_name}_SQUARED"] = (
-                    np.array(self.df[outcome_name].values) ** 2
+                df_outcomes[outcome_name] = self.df[outcome_name].fillna(0)
+                df_outcomes[f"{outcome_name}_SQUARED"] = (
+                    np.array(df_outcomes[outcome_name].values) ** 2
                 )
+                df_outcomes[f"{outcome_name}_non_bottom"] = (
+                    self.df[outcome_name].isna() == False
+                ).astype(int)
 
-                target_outcomes_names.extend([outcome_name, f"{outcome_name}_SQUARED"])
+                target_outcomes_names.extend(
+                    [
+                        outcome_name,
+                        f"{outcome_name}_SQUARED",
+                        f"{outcome_name}_non_bottom",
+                    ]
+                )
         else:
             # We accumulate the outcomes
             df_outcomes = pd.DataFrame()
@@ -167,6 +176,7 @@ class DivergenceExplorer:
                 )
 
         if FPM_algorithm == "fpgrowth":
+            df_outcomes.index = df_ohe.index
             df_divergence = fpgrowth_cm(
                 df_ohe.copy(),  # Df with one-hot encoded attributes
                 df_outcomes,  # Df with outcomes
@@ -260,18 +270,22 @@ class DivergenceExplorer:
 
         else:
             for quantitative_outcome in quantitative_outcomes:
+
+                quantitative_outcome_non_bottom = f"{quantitative_outcome}_non_bottom"
                 df_divergence[quantitative_outcome] = (
                     df_divergence[quantitative_outcome]
-                    / (df_divergence["support"] * len_dataset).round()
+                    / df_divergence[quantitative_outcome_non_bottom]
                 )
 
                 quantitative_outcome_squared = f"{quantitative_outcome}_SQUARED"
                 squared_cols_to_drop.append(quantitative_outcome_squared)
+                squared_cols_to_drop.append(quantitative_outcome_non_bottom)
 
                 # Add the info of the all dataset row
                 for column_name in [
                     quantitative_outcome,
                     quantitative_outcome_squared,
+                    quantitative_outcome_non_bottom,
                 ]:
                     all_dataset_row[column_name] = df_outcomes[column_name].sum()
 
@@ -283,7 +297,10 @@ class DivergenceExplorer:
                 )
 
                 # Compute the average of the all dataset row -- as above
-                overall_average = all_dataset_row[quantitative_outcome] / len_dataset
+                overall_average = (
+                    all_dataset_row[quantitative_outcome]
+                    / all_dataset_row[quantitative_outcome_non_bottom]
+                )
 
                 # Add the average to the all dataset row
                 all_dataset_row[quantitative_outcome] = overall_average
@@ -295,24 +312,34 @@ class DivergenceExplorer:
 
                 # Compute the t value with Welch's t-test
                 squared_values = df_divergence[quantitative_outcome_squared].values
-                support_count_values = (
-                    df_divergence["support"].values * len_dataset
-                ).round()
+                # support_count_values = (
+                #     df_divergence["support"].values * len_dataset
+                # ).round()
                 mean_values = df_divergence[quantitative_outcome].values
 
                 # We append the pos and neg values of the all dataset row
                 squared_values = np.concatenate(
                     [[all_dataset_row[quantitative_outcome_squared]], squared_values]
                 )
-                support_count_values = np.concatenate(
-                    [[len_dataset], support_count_values]
-                )
+                # support_count_values = np.concatenate(
+                #     [[len_dataset], support_count_values]
+                # )
                 mean_values = np.concatenate(
                     [[all_dataset_row[quantitative_outcome]], mean_values]
                 )
 
+                non_bottom_values = df_divergence[
+                    quantitative_outcome_non_bottom
+                ].values
+                non_bottom_values = np.concatenate(
+                    [
+                        [all_dataset_row[quantitative_outcome_non_bottom]],
+                        non_bottom_values,
+                    ]
+                )
+
                 t = compute_welch_t_test(
-                    squared_values, support_count_values, mean_values, 0
+                    squared_values, non_bottom_values, mean_values, 0
                 )
                 df_divergence[f"{quantitative_outcome}_t"] = t[
                     1:
