@@ -62,6 +62,8 @@ def get_welch_t_test(
 
 def compute_t_value_continuos(n1, tot1, tot_sq1, n2, tot2, tot_sq2):
     """Computes the value of Welch's t-test for two continuous variables."""
+    if n1 < 2 or n2 < 2:
+        return 0 # Not significant. 
     # These are the means. 
     mean1 = tot1 / n1
     mean2 = tot2 / n2
