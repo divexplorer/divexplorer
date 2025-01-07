@@ -334,6 +334,6 @@ class DivergenceExplorer:
 
         if show_coincise:
             df_divergence = df_divergence.drop(columns=cols_to_drop)
-        # df_divergence = df_divergence.drop(columns=squared_cols_to_drop)
+        df_divergence = df_divergence.drop(columns=squared_cols_to_drop)
 
         return df_divergence
