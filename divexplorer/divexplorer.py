@@ -62,13 +62,14 @@ def get_welch_t_test(
 
 def compute_t_value_continuos(n1, tot1, tot_sq1, n2, tot2, tot_sq2):
     """Computes the value of Welch's t-test for two continuous variables."""
+    # These are the means. 
     mean1 = tot1 / n1
     mean2 = tot2 / n2
-    var1 = (tot_sq1 / n1) - mean1 ** 2
-    var2 = (tot_sq2 / n2) - mean2 ** 2
+    # These are the population variances. 
+    var1 = ((tot_sq1 / n1) - mean1 ** 2) * n1 / (n1 - 1)
+    var2 = ((tot_sq2 / n2) - mean2 ** 2) * n2 / (n2 - 1)
     t = (abs(mean1 - mean2)) / ((var1 / n1 + var2 / n2) ** 0.5)
     return t
-
 
 
 class DivergenceExplorer:
@@ -144,7 +145,7 @@ class DivergenceExplorer:
                 if attr not in boolean_outcomes + quantitative_outcomes
             ]
 
-        if FPM_algorithm == "new_apriori":
+        if FPM_algorithm == "alt_apriori":
             assert len(boolean_outcomes) + len(quantitative_outcomes) > 0, "Some outcome must be specified"
             from divexplorer.utils_alt_apriori import Explorer
             e = Explorer(self.df,
@@ -177,7 +178,7 @@ class DivergenceExplorer:
                 df_dict[f'{c}_count'] = [e.root.count_not_nan[i]]
                 df_dict[f'{c}'] = [e.root.totals[i] / e.root.count_not_nan[i]]
                 df_dict[f'{c}_div'] = [0] # The divergence is 0 by definition.
-                df_dict[f'{c}_t'] = [float('inf')] # The t value is inf by definition.
+                df_dict[f'{c}_t'] = [0] # The t value is 0 by definition.
             # We add data for all other rows. 
             for itemset, node in e.frequent_itemsets:
                 if len(itemset) == 0:
