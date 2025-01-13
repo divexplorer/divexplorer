@@ -131,7 +131,7 @@ class DivergenceExplorer:
         assert FPM_algorithm in [
             "fpgrowth",
             "apriori",
-            "new_apriori"
+            "alt_apriori"
         ], f"{FPM_algorithm} algorithm is not handled."
 
         # Sets the default values for lists. 
@@ -262,7 +262,7 @@ class DivergenceExplorer:
                 min_support=min_support,  # Minimum support
                 columns_accumulate=list(df_outcomes.columns),  # Columns to accumulate
             )
-        else:
+        elif FPM_algorithm == "apriori":
             # We use the apriori algorithm
             df_with_outcomes = pd.concat([df_ohe, df_outcomes], axis=1)
 
